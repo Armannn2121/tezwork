@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, Share, Text, View } from 'react-native';
+import { ContactCard, ContactIcons } from '../../components/contact';
+import { RateModal, RatingBadge } from '../../components/rating';
 import { cityName } from '../../lib/cities';
 import { humanError, isIinMissing } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
@@ -14,6 +16,7 @@ import { colors, radius, themed } from '../../lib/theme';
 import { Applicant, ApplicationStatus, categoryOf, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
 import { Badge, Button, Card, EmptyState, ErrorBanner, IconText, Progress, SectionTitle, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
+import { cancelShiftReminder, scheduleShiftReminder } from '../../lib/reminders';
 import { useIinGate } from '../../lib/use-iin-gate';
 import { useNow } from '../../lib/use-now';
 
@@ -51,6 +54,7 @@ export default function ShiftDetails() {
         <View style={s.catIcon}><Ionicons name={cat.icon} size={26} color={colors.brand} /></View>
         <Text style={[text.h2, { marginTop: 12 }]}>{shift.title}</Text>
         {!!shift.company_name && <Text style={[text.muted, { fontSize: 15, marginTop: 2 }]}>{shift.company_name}</Text>}
+        {shift.company_reviews !== undefined && <View style={{ marginTop: 4 }}><RatingBadge avg={shift.company_rating} count={shift.company_reviews} /></View>}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
           <Badge label={cat.label} tone="neutral" />
           {isNightShift(shift.starts_at, shift.ends_at) && <Badge label={t('shift.night')} icon="moon" tone="info" />}
@@ -98,6 +102,7 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
   const { toast, confirm } = useFeedback();
   const iinGate = useIinGate();
   const [busy, setBusy] = useState(false);
+  const [rateOpen, setRateOpen] = useState(false);
   const status = shift.application_status;
   const now = useNow();
   const future = ts(shift.starts_at) > now;
@@ -114,6 +119,7 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
       return toast(humanError(error), 'error');
     }
     onChange({ applied: true, application_status: 'confirmed', spots_left: (shift.spots_left ?? 1) - 1 });
+    scheduleShiftReminder(shift);
     toast(t('shift.applied'), 'success');
   }
 
@@ -126,6 +132,7 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
     setBusy(false);
     if (error) return toast(humanError(error), 'error');
     onChange({ applied: false, application_status: 'cancelled' });
+    cancelShiftReminder(shift.id);
     toast(t('my.cancelled'), 'info');
   }
 
@@ -148,9 +155,24 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
         : !shift.applied && future && (shift.spots_left ?? 0) > 0
           ? <Button title={t('feed.apply')} icon="flash" onPress={apply} loading={busy} />
           : null}
+      {status && status !== 'cancelled' && !!shift.business_phone && (
+        <ContactCard title={t('contact.employer')} phone={shift.business_phone} />
+      )}
+      {status === 'completed' && shift.application_id && (
+        shift.my_stars
+          ? <Text style={[text.muted, { textAlign: 'center', marginBottom: 8 }]}>{t('rating.yours', { n: shift.my_stars })}</Text>
+          : <Button title={t('rating.rate')} icon="star-outline" variant="secondary" onPress={() => setRateOpen(true)} />
+      )}
       {status === 'confirmed' && future && (
         <Text style={[text.muted, { textAlign: 'center', marginTop: 12 }]}>{t('shift.comeEarly')}</Text>
       )}
+      <RateModal
+        visible={rateOpen}
+        applicationId={shift.application_id ?? null}
+        title={shift.company_name ?? shift.title}
+        onClose={() => setRateOpen(false)}
+        onDone={(n) => onChange({ my_stars: n })}
+      />
     </View>
   );
 }
@@ -168,6 +190,7 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
   const q = useFocusQuery<Applicant[]>(`applicants:${shift.id}`, () => supabase.rpc('shift_applicants', { p_shift_id: shift.id }));
   const applicants = q.loading ? null : q.data ?? [];
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [rateFor, setRateFor] = useState<Applicant | null>(null);
 
   async function setStatus(a: Applicant, to: ApplicationStatus) {
     setBusyId(a.application_id);
@@ -207,11 +230,21 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
             return (
               <View key={a.application_id} style={s.applicant}>
                 <View style={{ flex: 1 }}>
-                  <Text style={text.body}>{a.full_name}</Text>
-                  <View style={{ marginTop: 4 }}><Badge label={statusLabel(a.status)} tone={STATUS_TONE[a.status] ?? 'neutral'} /></View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={[text.body, { flexShrink: 1 }]} numberOfLines={1}>{a.full_name}</Text>
+                    {a.worker_reviews !== undefined && <RatingBadge avg={a.worker_rating} count={a.worker_reviews} size={12} />}
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                    <Badge label={statusLabel(a.status)} tone={STATUS_TONE[a.status] ?? 'neutral'} />
+                    {!!a.my_stars && <Text style={{ color: colors.muted, fontSize: 12 }}>{t('rating.yours', { n: a.my_stars })}</Text>}
+                  </View>
                 </View>
+                {!!a.worker_phone && <ContactIcons phone={a.worker_phone} />}
                 {next && started && (
                   <Button title={next.label()} size="sm" variant="secondary" loading={busyId === a.application_id} onPress={() => setStatus(a, next.to)} style={{ paddingHorizontal: 14, marginTop: 0 }} />
+                )}
+                {a.status === 'completed' && !a.my_stars && (
+                  <Button title={t('rating.rate')} icon="star-outline" size="sm" variant="secondary" onPress={() => setRateFor(a)} style={{ paddingHorizontal: 12, marginTop: 0 }} />
                 )}
               </View>
             );
@@ -226,6 +259,13 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
       {shift.status === 'open' && ts(shift.ends_at) > now && (
         <Button title={t('shift.close')} variant="danger" icon="close-circle-outline" onPress={closeShift} style={{ marginTop: 10 }} />
       )}
+      <RateModal
+        visible={!!rateFor}
+        applicationId={rateFor?.application_id ?? null}
+        title={rateFor?.full_name ?? ''}
+        onClose={() => setRateFor(null)}
+        onDone={(n) => q.setData((list) => (list ?? []).map((x) => (x.application_id === rateFor?.application_id ? { ...x, my_stars: n } : x)))}
+      />
     </View>
   );
 }

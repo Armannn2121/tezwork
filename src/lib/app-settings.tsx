@@ -4,11 +4,12 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { useColorScheme } from 'react-native';
 import { setHapticsEnabled } from './haptics';
 import { Lang, setLangValue } from './i18n';
+import { setRemindersEnabled } from './reminders';
 import { applyPalette } from './theme';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-type Settings = { lang: Lang; theme: ThemeMode; haptics: boolean };
+type Settings = { lang: Lang; theme: ThemeMode; haptics: boolean; reminders: boolean };
 
 type Ctx = Settings & {
   ready: boolean;
@@ -28,14 +29,14 @@ export const takeReturnTo = () => { const r = returnTo; returnTo = null; return 
 const deviceLang = (): Lang => (getLocales()[0]?.languageCode === 'ru' ? 'ru' : 'kk');
 
 const SettingsCtx = createContext<Ctx>({
-  lang: 'kk', theme: 'light', haptics: true, ready: false, scheme: 'light', revision: '', update: () => {},
+  lang: 'kk', theme: 'light', haptics: true, reminders: true, ready: false, scheme: 'light', revision: '', update: () => {},
 });
 
 export const useAppSettings = () => useContext(SettingsCtx);
 
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const [settings, setSettings] = useState<Settings>({ lang: deviceLang(), theme: 'light', haptics: true });
+  const [settings, setSettings] = useState<Settings>({ lang: deviceLang(), theme: 'light', haptics: true, reminders: true });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   setLangValue(settings.lang);
   applyPalette(scheme);
   setHapticsEnabled(settings.haptics);
+  setRemindersEnabled(settings.reminders);
 
   const update = useCallback((patch: Partial<Settings>, stay?: string) => {
     if (stay) returnTo = stay;

@@ -2,12 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { MenuGroup, MenuRow } from '../../components/menu-row';
+import { RatingBadge } from '../../components/rating';
 import { cityName } from '../../lib/cities';
 import { useFeedback } from '../../lib/feedback';
 import { formatPhone, initials } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { maskIin } from '../../lib/kz-id';
 import { useSession } from '../../lib/session';
+import { supabase } from '../../lib/supabase';
+import { useFocusQuery } from '../../lib/use-focus-query';
 import { colors, radius, themed } from '../../lib/theme';
 import { Badge, text } from '../../lib/ui';
 
@@ -16,6 +19,7 @@ export default function Profile() {
   const { profile, session, iin, signOut } = useSession();
   const { confirm } = useFeedback();
   const isBiz = profile?.role === 'business';
+  const rating = useFocusQuery<{ avg: number | null; reviews: number }[]>('my-rating', () => supabase.rpc('my_rating'));
 
   async function logout() {
     if (await confirm({ title: t('settings.logout'), message: t('settings.logoutMsg'), confirm: t('settings.logout'), cancel: t('common.cancel') })) {
@@ -29,6 +33,9 @@ export default function Profile() {
         <View style={s.avatar}><Text style={s.avatarText}>{initials(profile?.full_name)}</Text></View>
         <Text style={[text.h2, { marginTop: 12, textAlign: 'center' }]}>{profile?.full_name}</Text>
         {isBiz && !!profile?.company_name && <Text style={[text.muted, { fontSize: 15 }]}>{profile.company_name}</Text>}
+        <View style={{ marginTop: 8 }}>
+          {rating.data?.[0] && <RatingBadge avg={rating.data[0].avg} count={rating.data[0].reviews} size={15} />}
+        </View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
           <Badge label={isBiz ? t('role.business') : t('role.worker')} icon={isBiz ? 'business' : 'person'} tone="brand" />
           <Badge label={cityName(profile?.city ?? '')} icon="location" tone="neutral" />

@@ -3,12 +3,14 @@ import { t } from '../lib/i18n';
 import { Field } from '../lib/ui';
 
 // Пайдаланушы тек 10 цифрды енгізеді, «+7» алдын ала тұрады
-export function PhoneField({ digits, onChange, error, onSubmit }: {
+export function PhoneField({ digits, onChange, error, onSubmit, label, hint, autoFocus = true }: {
   digits: string; onChange: (d: string) => void; error?: string | null; onSubmit?: () => void;
+  label?: string; hint?: string; autoFocus?: boolean;
 }) {
   return (
     <Field
-      label={t('phone.label')}
+      label={label ?? t('phone.label')}
+      hint={hint}
       prefix="+7"
       value={maskLocalPhone(digits)}
       onChangeText={(v) => {
@@ -25,7 +27,7 @@ export function PhoneField({ digits, onChange, error, onSubmit }: {
       error={error}
       returnKeyType="done"
       onSubmitEditing={onSubmit}
-      autoFocus
+      autoFocus={autoFocus}
     />
   );
 }

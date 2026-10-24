@@ -6,6 +6,7 @@ import { cityName } from '../lib/cities';
 import { t } from '../lib/i18n';
 import { categoryOf, ShiftView } from '../lib/types';
 import { Badge, Card, colors, IconText, Progress, text } from '../lib/ui';
+import { RatingBadge } from './rating';
 
 export function ShiftCard({ shift: s, onPress, badges, footer, showProgress }: {
   shift: ShiftView; onPress?: () => void; badges?: ReactNode; footer?: ReactNode; showProgress?: boolean;
@@ -21,7 +22,12 @@ export function ShiftCard({ shift: s, onPress, badges, footer, showProgress }: {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={text.title} numberOfLines={2}>{s.title}</Text>
-          {!!s.company_name && <Text style={text.muted} numberOfLines={1}>{s.company_name}</Text>}
+          {!!s.company_name && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={[text.muted, { flexShrink: 1 }]} numberOfLines={1}>{s.company_name}</Text>
+              {s.company_reviews !== undefined && <RatingBadge avg={s.company_rating} count={s.company_reviews} size={12} />}
+            </View>
+          )}
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={text.price}>{formatKzt(s.pay_kzt)}</Text>

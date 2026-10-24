@@ -13,6 +13,9 @@ const SERVER_MESSAGES: [RegExp, TKey][] = [
   [/16 жастан/, 'err.tooYoung'],
   [/18 жастан/, 'err.tooYoungEmployer'],
   [/әлі басталған жоқ/, 'err.notStartedYet'],
+  [/Бас тарту мүмкін емес/, 'err.cantCancel'],
+  [/Тек аяқталған ауысымға/, 'err.onlyCompleted'],
+  [/баға беріп қойғансыз/, 'err.alreadyRated'],
 ];
 
 // Supabase қателерін пайдаланушыға түсінікті мәтінге айналдырады

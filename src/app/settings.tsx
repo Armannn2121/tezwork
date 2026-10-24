@@ -7,6 +7,7 @@ import { SUPPORT_EMAIL, SUPPORT_TELEGRAM } from '../lib/config';
 import { humanError } from '../lib/errors';
 import { useFeedback } from '../lib/feedback';
 import { LANGS, t } from '../lib/i18n';
+import { cancelAllReminders } from '../lib/reminders';
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
@@ -14,7 +15,7 @@ import { Segmented, text } from '../lib/ui';
 
 export default function Settings() {
   const router = useRouter();
-  const { lang, theme, haptics, update } = useAppSettings();
+  const { lang, theme, haptics, reminders, update } = useAppSettings();
   const { signOut } = useSession();
   const { toast, confirm } = useFeedback();
 
@@ -52,6 +53,11 @@ export default function Settings() {
       />
 
       <MenuGroup>
+        <MenuRow
+          icon="notifications-outline"
+          label={t('settings.reminders')}
+          right={<Switch value={reminders} onValueChange={(v) => { update({ reminders: v }); if (!v) cancelAllReminders(); }} trackColor={{ true: colors.brand, false: colors.border }} thumbColor="#fff" />}
+        />
         <MenuRow
           icon="phone-portrait-outline"
           label={t('settings.haptics')}

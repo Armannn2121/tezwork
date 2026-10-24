@@ -10,6 +10,7 @@ import { useFeedback } from '../../lib/feedback';
 import { dayOffset, firstName, formatKzt, hourlyRate, shiftWhen, ts } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
+import { scheduleShiftReminder } from '../../lib/reminders';
 import { patchShift, putBizShifts, putOpenShifts } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, themed } from '../../lib/theme';
@@ -83,6 +84,7 @@ function WorkerFeed() {
     // Тізімді күтпей-ақ жаңартамыз
     q.setData((d) => (d ?? []).map((x) => (x.id === s.id ? { ...x, applied: true, spots_left: x.spots_left - 1 } : x)));
     patchShift(s.id, { applied: true, spots_left: s.spots_left - 1 });
+    scheduleShiftReminder(s);
     toast(t('feed.appliedToast'), 'success');
     q.reload();
   }

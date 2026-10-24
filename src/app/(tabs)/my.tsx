@@ -1,11 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { RateModal } from '../../components/rating';
 import { ShiftCard } from '../../components/shift-card';
 import { humanError } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
 import { formatKzt, timeUntil, ts } from '../../lib/format';
 import { t } from '../../lib/i18n';
+import { cancelShiftReminder, syncShiftReminders } from '../../lib/reminders';
 import { putApplications } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
 import { MyApplication, STATUS_TONE, statusLabel } from '../../lib/types';
@@ -15,11 +17,20 @@ import { Badge, Button, CardSkeletons, colors, EmptyState, ErrorBanner, Segmente
 
 type Tab = 'upcoming' | 'history';
 
+// Алдағы расталған ауысымдарға еске салғыштарды қалпына келтіреміз (басқа құрылғыдан жазылса да)
+function onLoaded(list: MyApplication[] | null) {
+  const items = list ?? [];
+  putApplications(items);
+  const soon = items.filter((a) => a.status === 'confirmed' && ts(a.starts_at) > Date.now());
+  syncShiftReminders(soon.map((a) => ({ id: a.shift_id, title: a.title, starts_at: a.starts_at, city: a.city, address: a.address })));
+}
+
 export default function MyApplications() {
   const router = useRouter();
   const { toast, confirm } = useFeedback();
   const [tab, setTab] = useState<Tab>('upcoming');
-  const q = useFocusQuery<MyApplication[]>('my-apps', () => supabase.rpc('my_applications'), (d) => putApplications(d ?? []));
+  const [rateFor, setRateFor] = useState<MyApplication | null>(null);
+  const q = useFocusQuery<MyApplication[]>('my-apps', () => supabase.rpc('my_applications'), onLoaded);
 
   const now = useNow();
   const all = q.data ?? [];
@@ -40,6 +51,7 @@ export default function MyApplications() {
     if (!ok) return;
     const { error } = await supabase.rpc('cancel_application', { p_application_id: a.application_id });
     if (error) return toast(humanError(error), 'error');
+    cancelShiftReminder(a.shift_id);
     toast(t('my.cancelled'), 'info');
     q.reload();
   }
@@ -66,34 +78,55 @@ export default function MyApplications() {
     </View>
   );
 
+  function footer(a: MyApplication) {
+    if (a.status === 'confirmed' && ts(a.starts_at) > now) {
+      return <Button title={t('my.cancel')} variant="ghost" size="sm" onPress={() => cancel(a)} />;
+    }
+    if (a.status === 'completed') {
+      return a.my_stars
+        ? <Text style={text.muted}>{t('rating.yours', { n: a.my_stars })}</Text>
+        : <Button title={t('rating.rate')} icon="star-outline" variant="secondary" size="sm" onPress={() => setRateFor(a)} />;
+    }
+    return null;
+  }
+
   return (
-    <FlatList
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}
-      data={q.loading ? [] : tab === 'upcoming' ? upcoming : history}
-      keyExtractor={(i) => i.application_id}
-      ListHeaderComponent={header}
-      refreshControl={<RefreshControl refreshing={q.refreshing} tintColor={colors.brand} onRefresh={q.refresh} />}
-      ListEmptyComponent={q.loading ? <CardSkeletons count={2} /> : (
-        <EmptyState
-          icon={tab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
-          title={tab === 'upcoming' ? t('my.emptyUpcoming') : t('my.emptyHistory')}
-          subtitle={tab === 'upcoming' ? t('my.emptyUpcomingSub') : t('my.emptyHistorySub')}
-          action={tab === 'upcoming' ? { title: t('my.findWork'), onPress: () => router.navigate('/') } : undefined}
-        />
-      )}
-      renderItem={({ item: a }) => {
-        return (
+    <>
+      <FlatList
+        style={{ flex: 1, backgroundColor: colors.bg }}
+        contentContainerStyle={{ padding: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}
+        data={q.loading ? [] : tab === 'upcoming' ? upcoming : history}
+        keyExtractor={(i) => i.application_id}
+        ListHeaderComponent={header}
+        refreshControl={<RefreshControl refreshing={q.refreshing} tintColor={colors.brand} onRefresh={q.refresh} />}
+        ListEmptyComponent={q.loading ? <CardSkeletons count={2} /> : (
+          <EmptyState
+            icon={tab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
+            title={tab === 'upcoming' ? t('my.emptyUpcoming') : t('my.emptyHistory')}
+            subtitle={tab === 'upcoming' ? t('my.emptyUpcomingSub') : t('my.emptyHistorySub')}
+            action={tab === 'upcoming' ? { title: t('my.findWork'), onPress: () => router.navigate('/') } : undefined}
+          />
+        )}
+        renderItem={({ item: a }) => (
           <ShiftCard
-            shift={{ id: a.shift_id, title: a.title, city: a.city, address: a.address, starts_at: a.starts_at, ends_at: a.ends_at, pay_kzt: a.pay_kzt, company_name: a.company_name }}
+            shift={{
+              id: a.shift_id, title: a.title, city: a.city, address: a.address, starts_at: a.starts_at, ends_at: a.ends_at,
+              pay_kzt: a.pay_kzt, company_name: a.company_name, category: a.category,
+              company_rating: a.company_rating, company_reviews: a.company_reviews,
+            }}
             onPress={() => router.push({ pathname: '/shift/[id]', params: { id: a.shift_id } })}
             badges={<Badge label={statusLabel(a.status)} tone={STATUS_TONE[a.status] ?? 'neutral'} />}
-            footer={a.status === 'confirmed' && ts(a.starts_at) > now
-              ? <Button title={t('my.cancel')} variant="ghost" size="sm" onPress={() => cancel(a)} />
-              : null}
+            footer={footer(a)}
           />
-        );
-      }}
-    />
+        )}
+      />
+      <RateModal
+        visible={!!rateFor}
+        applicationId={rateFor?.application_id ?? null}
+        title={rateFor?.company_name ?? rateFor?.title ?? ''}
+        onClose={() => setRateFor(null)}
+        onDone={(n) => q.setData((list) => (list ?? []).map((x) => (x.application_id === rateFor?.application_id ? { ...x, my_stars: n } : x)))}
+      />
+    </>
   );
 }
