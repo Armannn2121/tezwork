@@ -58,7 +58,10 @@ export function ProfileFields({ value, onChange, errors, iinLocked }: {
         autoComplete="name"
         error={err('full_name')}
       />
-      {value.role === 'business' ? (
+      {!iinLocked && (
+        <IinField role={value.role} value={value.iin} onChange={(v) => onChange({ ...value, iin: v })} error={errors?.iin} />
+      )}
+      {value.role === 'business' && (
         <>
           <Field
             label={t('form.company')}
@@ -69,9 +72,7 @@ export function ProfileFields({ value, onChange, errors, iinLocked }: {
           />
           <BinField value={value.company_bin} onChange={(v) => onChange({ ...value, company_bin: v })} error={errors?.company_bin} />
         </>
-      ) : !iinLocked ? (
-        <IinField value={value.iin} onChange={(v) => onChange({ ...value, iin: v })} error={errors?.iin} />
-      ) : null}
+      )}
       <CityField value={value.city} onChange={(c) => onChange({ ...value, city: c })} />
     </View>
   );

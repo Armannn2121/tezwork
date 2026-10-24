@@ -1,3 +1,5 @@
+import type { Role } from './types';
+
 // ЖСН / БСН (ИИН / БИН) — 12 цифр, соңғысы бақылау цифры.
 // Алгоритм серверде де бар: supabase/migrations/20261025120000_iin_terms.sql (is_valid_kz_id)
 
@@ -35,13 +37,18 @@ export function parseIin(v: string, now = new Date()): IinInfo | null {
 
 export const MIN_WORK_AGE = 16;
 
-export type IinError = 'iin.len' | 'iin.invalid' | 'iin.young';
+// Жұмыс беруші (ауысым жариялайтын адам) — кәмелетке толған болуы керек
+export const MIN_EMPLOYER_AGE = 18;
 
-export function validateIin(v: string): IinError | null {
+export const minAgeFor = (role: Role) => (role === 'business' ? MIN_EMPLOYER_AGE : MIN_WORK_AGE);
+
+export type IinError = 'iin.len' | 'iin.invalid' | 'iin.young' | 'iin.youngEmployer';
+
+export function validateIin(v: string, role: Role): IinError | null {
   if (v.length !== 12) return 'iin.len';
   const info = parseIin(v);
   if (!info) return 'iin.invalid';
-  if (info.age < MIN_WORK_AGE) return 'iin.young';
+  if (info.age < minAgeFor(role)) return role === 'business' ? 'iin.youngEmployer' : 'iin.young';
   return null;
 }
 

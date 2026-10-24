@@ -11,6 +11,7 @@ const SERVER_MESSAGES: [RegExp, TKey][] = [
   [/жазылып қойғансыз/, 'err.alreadyApplied'],
   [/ЖСН көрсетілмеген/, 'err.iinMissing'],
   [/16 жастан/, 'err.tooYoung'],
+  [/18 жастан/, 'err.tooYoungEmployer'],
   [/әлі басталған жоқ/, 'err.notStartedYet'],
 ];
 

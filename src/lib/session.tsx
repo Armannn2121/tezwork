@@ -7,7 +7,7 @@ import { Profile } from './types';
 type SessionState = {
   session: Session | null;
   profile: Profile | null;
-  /** Жұмысшының ЖСН-і (тек өзіне көрінеді) */
+  /** Пайдаланушының ЖСН-і (тек өзіне көрінеді) */
   iin: string | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
@@ -42,7 +42,7 @@ export async function insertProfile(uid: string, d: RegistrationDraft) {
   let { error } = await supabase.from('profiles').insert({ ...base, ...extra });
   // Миграция әлі жіберілмесе, жаңа бағандар жоқ — оларсыз қайталаймыз
   if (error?.code === 'PGRST204') ({ error } = await supabase.from('profiles').insert(base));
-  if (!error && d.role === 'worker' && d.iin) {
+  if (!error && d.iin) {
     await supabase.from('private_profiles').insert({ id: uid, iin: d.iin });
   }
   return { error };
@@ -78,7 +78,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // Supabase кеңесі: callback ішінде басқа supabase шақыруларын күтпеу
       setTimeout(async () => {
         const p = s ? await ensureProfile(s.user) : null;
-        const i = s && p?.role === 'worker' ? await fetchIin(s.user.id) : null;
+        const i = s && p ? await fetchIin(s.user.id) : null;
         if (loadedUid.current === uid) {
           setProfile(p);
           setIin(i);
@@ -93,7 +93,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (!session) return;
     const p = await fetchProfile(session.user.id);
     setProfile(p);
-    if (p?.role === 'worker') setIin(await fetchIin(session.user.id));
+    if (p) setIin(await fetchIin(session.user.id));
   }, [session]);
 
   const saveIin = useCallback(async (value: string) => {

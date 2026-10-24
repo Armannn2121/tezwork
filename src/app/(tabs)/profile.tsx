@@ -35,10 +35,10 @@ export default function Profile() {
         </View>
       </View>
 
-      {!isBiz && !iin && (
+      {!iin && (
         <Pressable onPress={() => router.push('/profile-edit')} style={s.warn}>
           <Ionicons name="alert-circle" size={20} color={colors.warn} />
-          <Text style={{ color: colors.text, flex: 1, fontWeight: '600' }}>{t('profile.iinWarn')}</Text>
+          <Text style={{ color: colors.text, flex: 1, fontWeight: '600' }}>{t(isBiz ? 'profile.iinWarnEmployer' : 'profile.iinWarn')}</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.warn} />
         </Pressable>
       )}
@@ -46,9 +46,8 @@ export default function Profile() {
       <MenuGroup>
         <MenuRow icon="create-outline" label={t('profile.edit')} onPress={() => router.push('/profile-edit')} />
         <MenuRow icon="call-outline" label={t('profile.phone')} value={formatPhone(session?.user.phone)} />
-        {isBiz
-          ? <MenuRow icon="add-circle-outline" label={t('profile.newShift')} onPress={() => router.navigate('/create')} last />
-          : <MenuRow icon="card-outline" label={t('profile.iin')} value={iin ? maskIin(iin) : t('profile.iinMissing')} onPress={iin ? undefined : () => router.push('/profile-edit')} last />}
+        <MenuRow icon="card-outline" label={t('profile.iin')} value={iin ? maskIin(iin) : t('profile.iinMissing')} onPress={iin ? undefined : () => router.push('/profile-edit')} last={!isBiz} />
+        {isBiz && <MenuRow icon="add-circle-outline" label={t('profile.newShift')} onPress={() => router.navigate('/create')} last />}
       </MenuGroup>
 
       <MenuGroup>

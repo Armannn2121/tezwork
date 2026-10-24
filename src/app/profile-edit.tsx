@@ -44,7 +44,7 @@ export default function ProfileEdit() {
     const { error } = await supabase.from('profiles').update(patch).eq('id', profile.id);
     if (error) { setBusy(false); return toast(humanError(error), 'error'); }
     // ЖСН бір рет сақталады
-    if (!isBiz && !iin && form.iin) {
+    if (!iin && form.iin) {
       const { error: iinErr } = await saveIin(form.iin);
       if (iinErr) { setBusy(false); return toast(humanError(iinErr), 'error'); }
     }
@@ -62,7 +62,7 @@ export default function ProfileEdit() {
         keyboardShouldPersistTaps="handled"
       >
         <ProfileFields value={form} onChange={(f) => { setForm(f); setErrors({}); }} errors={errors} iinLocked={!!iin} />
-        {!isBiz && !!iin && (
+        {!!iin && (
           <>
             <Field label={t('profile.iin')} value={maskIin(iin)} editable={false} />
             <Text style={{ color: colors.faint, fontSize: 12, marginTop: -8, marginBottom: 14 }}>{t('iin.locked')}</Text>

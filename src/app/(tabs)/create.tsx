@@ -4,12 +4,13 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-na
 import { CityField } from '../../components/city-picker';
 import { DayPicker, Stepper, TimePicker } from '../../components/pickers';
 import { ShiftCard } from '../../components/shift-card';
-import { humanError } from '../../lib/errors';
+import { humanError, isIinMissing } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
 import { formatHours, formatKzt, formatTime, hoursBetween, upcomingDays } from '../../lib/format';
 import { DEFAULT_CITY } from '../../lib/cities';
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
+import { useIinGate } from '../../lib/use-iin-gate';
 import { getShift } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
 import { categories } from '../../lib/types';
@@ -41,6 +42,7 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
   const router = useRouter();
   const { session, profile } = useSession();
   const { toast } = useFeedback();
+  const iinGate = useIinGate();
   const src = from ? getShift(from) : undefined;
   const [title, setTitle] = useState(src?.title ?? '');
   const [category, setCategory] = useState(src?.category ?? 'retail');
@@ -62,6 +64,8 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
 
   async function save() {
     if (!session) return;
+    // Жұмыс беруші 18+ — ЖСН-сіз жариялауға болмайды (серверде де тексеріледі)
+    if (!(await iinGate())) return;
     const e: Errors = {};
     if (title.trim().length < 3) e.title = t('create.titleErr');
     if (startsAt <= new Date()) e.time = t('create.timeFuture');
@@ -79,7 +83,10 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
       pay_kzt: total, spots,
     });
     setBusy(false);
-    if (error) return toast(humanError(error), 'error');
+    if (error) {
+      if (isIinMissing(error)) { await iinGate(true); return; }
+      return toast(humanError(error), 'error');
+    }
     toast(t('create.published'), 'success');
     if (from) router.setParams({ from: undefined });
     onDone();

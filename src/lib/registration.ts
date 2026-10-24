@@ -55,8 +55,10 @@ export function validateDraft(d: RegistrationDraft, opts: { requireIin: boolean 
       const b = validateBin(d.company_bin);
       if (b) e.company_bin = b;
     }
-  } else if (opts.requireIin || d.iin) {
-    const i = validateIin(d.iin);
+  }
+  // ЖСН екі рөлге де керек: жұмыс іздеуші — 16+, жұмыс беруші — 18+
+  if (opts.requireIin || d.iin) {
+    const i = validateIin(d.iin, d.role);
     if (i) e.iin = i;
   }
   return e;
