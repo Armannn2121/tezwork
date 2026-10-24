@@ -5,6 +5,7 @@ import { AuthShell } from '../../components/auth-shell';
 import { PhoneField } from '../../components/phone-field';
 import { humanError, isUnregistered } from '../../lib/errors';
 import { normalizePhone } from '../../lib/format';
+import { t } from '../../lib/i18n';
 import { setDraft } from '../../lib/registration';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
@@ -19,7 +20,7 @@ export default function Login() {
 
   async function sendCode() {
     const phone = normalizePhone(digits);
-    if (!phone) return setError('Нөмірді толық енгізіңіз: 10 цифр');
+    if (!phone) return setError(t('err.phoneInvalid'));
     setError(null); setNotFound(false); setBusy(true);
     setDraft(null);
     // Кіру — тек бар аккаунттарға. Жаңа нөмір болса, тіркелуге жібереміз
@@ -34,21 +35,21 @@ export default function Login() {
 
   return (
     <AuthShell
-      title="Қош келдіңіз!"
-      subtitle="Тіркелген телефон нөміріңізді енгізіңіз — SMS арқылы код жібереміз"
+      title={t('login.title')}
+      subtitle={t('login.subtitle')}
       footer={
         <>
-          <Button title="Код алу" onPress={sendCode} loading={busy} disabled={digits.length < 10} />
+          <Button title={t('login.getCode')} onPress={sendCode} loading={busy} disabled={digits.length < 10} />
           <Text style={[text.muted, { textAlign: 'center', marginTop: 16 }]}>
-            Аккаунтыңыз жоқ па?{' '}
-            <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={() => router.replace('/register')}>Тіркелу</Text>
+            {t('login.noAccount')}{' '}
+            <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={() => router.replace('/register')}>{t('welcome.register')}</Text>
           </Text>
         </>
       }
     >
       <PhoneField digits={digits} onChange={(d) => { setDigits(d); setError(null); }} error={error} onSubmit={sendCode} />
       {notFound && (
-        <Button title="Осы нөмірмен тіркелу" variant="secondary" icon="person-add-outline" onPress={() => router.replace('/register')} />
+        <Button title={t('login.registerWithPhone')} variant="secondary" icon="person-add-outline" onPress={() => router.replace('/register')} />
       )}
     </AuthShell>
   );

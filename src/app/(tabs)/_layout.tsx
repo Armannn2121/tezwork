@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useSession } from '../../lib/session';
+import { t } from '../../lib/i18n';
 import { colors } from '../../lib/theme';
 
 export default function TabsLayout() {
@@ -24,14 +25,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: isBiz ? 'Ауысымдарым' : 'Жұмыстар',
+          title: isBiz ? t('tab.myShifts') : t('tab.jobs'),
           tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'flash' : 'flash-outline'} color={color as string} size={size} />,
         }}
       />
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Жариялау',
+          title: t('tab.create'),
           href: isBiz ? undefined : null,
           tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'add-circle' : 'add-circle-outline'} color={color as string} size={size} />,
         }}
@@ -39,7 +40,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="my"
         options={{
-          title: 'Жазылымдарым',
+          title: t('tab.my'),
           href: isBiz ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'calendar' : 'calendar-outline'} color={color as string} size={size} />,
         }}
@@ -47,7 +48,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Профиль',
+          title: t('tab.profile'),
           tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'person' : 'person-outline'} color={color as string} size={size} />,
         }}
       />

@@ -1,23 +1,39 @@
+import { t, TKey } from './i18n';
+
 type AnyError = { message?: string; code?: string; status?: number } | null | undefined;
+
+// Сервер (RPC) қазақша қайтаратын хабарламалар → аударма кілттері
+const SERVER_MESSAGES: [RegExp, TKey][] = [
+  [/Тек орындаушы жазыла алады/, 'err.onlyWorker'],
+  [/Ауысым қолжетімсіз/, 'err.shiftUnavailable'],
+  [/Ауысым басталып кеткен/, 'err.shiftStarted'],
+  [/Бос орын қалмады/, 'err.noSpots'],
+  [/жазылып қойғансыз/, 'err.alreadyApplied'],
+  [/ЖСН көрсетілмеген/, 'err.iinMissing'],
+  [/16 жастан/, 'err.tooYoung'],
+  [/әлі басталған жоқ/, 'err.notStartedYet'],
+];
 
 // Supabase қателерін пайдаланушыға түсінікті мәтінге айналдырады
 export function humanError(e: AnyError): string {
   const msg = e?.message ?? '';
   const code = e?.code ?? '';
-  if (isUnregistered(e)) return 'Бұл нөмір тіркелмеген. Алдымен тіркеліңіз.';
-  if (/expired|invalid/i.test(msg) && /token|otp/i.test(msg)) return 'Код қате немесе мерзімі өтті';
-  if (code === 'over_sms_send_rate_limit' || /only request this after|rate limit/i.test(msg))
-    return 'Тым жиі сұрадыңыз. Бір минуттан соң қайталаңыз.';
-  if (code === 'sms_send_failed' || /sending (confirmation |)otp|sms provider/i.test(msg))
-    return 'SMS жіберу мүмкін болмады. Кейінірек қайталаңыз немесе қолдау қызметіне жазыңыз.';
-  if (/network request failed|failed to fetch|fetch failed/i.test(msg)) return 'Интернет байланысын тексеріңіз';
-  if (code === 'PGRST202' || /could not find the function/i.test(msg))
-    return 'Бұл мүмкіндік серверде әлі қосылмаған (supabase/migrations ішіндегі SQL-ды іске қосыңыз)';
-  if (code === '42501' || /row-level security/i.test(msg)) return 'Бұл әрекетке рұқсат жоқ';
-  return msg || 'Белгісіз қате';
+  const known = SERVER_MESSAGES.find(([re]) => re.test(msg));
+  if (known) return t(known[1]);
+  if (isUnregistered(e)) return t('err.unregistered');
+  if (code === 'otp_expired' || (/expired|invalid/i.test(msg) && /token|otp/i.test(msg))) return t('err.otp');
+  if (code === 'over_sms_send_rate_limit' || /only request this after|rate limit/i.test(msg)) return t('err.rateLimit');
+  if (code === 'sms_send_failed' || /sending (confirmation |)otp|sms provider/i.test(msg)) return t('err.sms');
+  if (/network request failed|failed to fetch|fetch failed/i.test(msg)) return t('err.network');
+  if (code === 'PGRST202' || code === 'PGRST205' || /could not find the (function|table)/i.test(msg)) return t('err.notDeployed');
+  if (code === '23505' && /iin/i.test(msg)) return t('err.iinTaken');
+  if (code === '42501' || /row-level security/i.test(msg)) return t('err.forbidden');
+  return msg || t('err.unknown');
 }
 
 // shouldCreateUser: false кезінде жоқ пайдаланушы осындай қате қайтарады
 export function isUnregistered(e: AnyError): boolean {
   return e?.code === 'otp_disabled' || /signups not allowed/i.test(e?.message ?? '');
 }
+
+export const isIinMissing = (e: AnyError) => /ЖСН көрсетілмеген/.test(e?.message ?? '');

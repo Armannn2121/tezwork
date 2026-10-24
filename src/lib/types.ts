@@ -1,5 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
+import { t, TKey } from './i18n';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -10,7 +11,9 @@ export type Profile = {
   role: Role;
   full_name: string;
   company_name: string | null;
+  company_bin?: string | null;
   city: string;
+  terms_accepted_at?: string | null;
 };
 
 export type OpenShift = {
@@ -43,21 +46,27 @@ export type ShiftView = {
   application_id?: string; application_status?: ApplicationStatus;
 };
 
-export const CITIES = ['Алматы', 'Астана', 'Шымкент', 'Қарағанды'];
-
-export const CATEGORIES: { id: string; label: string; icon: IconName }[] = [
-  { id: 'retail', label: 'Сауда', icon: 'storefront-outline' },
-  { id: 'warehouse', label: 'Қойма', icon: 'cube-outline' },
-  { id: 'courier', label: 'Курьер', icon: 'bicycle-outline' },
-  { id: 'cashier', label: 'Касса', icon: 'cash-outline' },
-  { id: 'other', label: 'Басқа', icon: 'briefcase-outline' },
+const CATEGORY_DEFS: { id: string; icon: IconName }[] = [
+  { id: 'retail', icon: 'storefront-outline' },
+  { id: 'warehouse', icon: 'cube-outline' },
+  { id: 'courier', icon: 'bicycle-outline' },
+  { id: 'cashier', icon: 'cash-outline' },
+  { id: 'horeca', icon: 'restaurant-outline' },
+  { id: 'cleaning', icon: 'sparkles-outline' },
+  { id: 'events', icon: 'musical-notes-outline' },
+  { id: 'other', icon: 'briefcase-outline' },
 ];
 
-export const categoryOf = (id?: string) => CATEGORIES.find((c) => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1];
+// Атаулар ағымдағы тілде — сондықтан функция
+export const categories = () => CATEGORY_DEFS.map((c) => ({ ...c, label: t(`cat.${c.id}` as TKey) }));
 
-export const APPLICATION_STATUS: Record<ApplicationStatus, { label: string; tone: 'brand' | 'info' | 'neutral' | 'danger' }> = {
-  confirmed: { label: 'Расталған', tone: 'brand' },
-  checked_in: { label: 'Жұмыста', tone: 'info' },
-  completed: { label: 'Аяқталды', tone: 'neutral' },
-  cancelled: { label: 'Бас тартылды', tone: 'danger' },
+export const categoryOf = (id?: string) => {
+  const all = categories();
+  return all.find((c) => c.id === id) ?? all[all.length - 1];
 };
+
+export const STATUS_TONE: Record<ApplicationStatus, 'brand' | 'info' | 'neutral' | 'danger'> = {
+  confirmed: 'brand', checked_in: 'info', completed: 'neutral', cancelled: 'danger',
+};
+
+export const statusLabel = (s: ApplicationStatus) => t(`status.${s}` as TKey);

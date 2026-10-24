@@ -1,17 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { humanError } from '../../lib/errors';
+import { ActivityIndicator, Linking, ScrollView, Share, Text, View } from 'react-native';
+import { cityName } from '../../lib/cities';
+import { humanError, isIinMissing } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
 import { dayLabel, formatHours, formatKzt, formatTime, hourlyRate, hoursBetween, isNightShift, timeUntil, ts } from '../../lib/format';
+import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
 import { getShift, patchShift } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
-import { colors, radius } from '../../lib/theme';
-import { Applicant, APPLICATION_STATUS, ApplicationStatus, categoryOf, ShiftView } from '../../lib/types';
+import { colors, radius, themed } from '../../lib/theme';
+import { Applicant, ApplicationStatus, categoryOf, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
 import { Badge, Button, Card, EmptyState, ErrorBanner, IconText, Progress, SectionTitle, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
+import { useIinGate } from '../../lib/use-iin-gate';
 import { useNow } from '../../lib/use-now';
 
 export default function ShiftDetails() {
@@ -24,7 +27,7 @@ export default function ShiftDetails() {
   if (!shift) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <EmptyState icon="alert-circle-outline" title="Ауысым табылмады" subtitle="Тізімге оралып, қайта ашып көріңіз" action={{ title: 'Артқа', onPress: () => router.back() }} />
+        <EmptyState icon="alert-circle-outline" title={t('shift.notFound')} subtitle={t('shift.notFoundSub')} action={{ title: t('common.back'), onPress: () => router.back() }} />
       </View>
     );
   }
@@ -36,7 +39,11 @@ export default function ShiftDetails() {
 
   const hours = hoursBetween(shift.starts_at, shift.ends_at);
   const cat = categoryOf(shift.category);
-  const place = [shift.city, shift.address].filter(Boolean).join(', ');
+  const place = [cityName(shift.city), shift.address].filter(Boolean).join(', ');
+
+  const share = () => Share.share({
+    message: t('shift.shareText', { title: shift.title, when: `${dayLabel(shift.starts_at)} ${formatTime(shift.starts_at)}–${formatTime(shift.ends_at)}`, place, pay: formatKzt(shift.pay_kzt) }),
+  }).catch(() => {});
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
@@ -46,18 +53,18 @@ export default function ShiftDetails() {
         {!!shift.company_name && <Text style={[text.muted, { fontSize: 15, marginTop: 2 }]}>{shift.company_name}</Text>}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
           <Badge label={cat.label} tone="neutral" />
-          {isNightShift(shift.starts_at, shift.ends_at) && <Badge label="Түнгі" icon="moon" tone="info" />}
+          {isNightShift(shift.starts_at, shift.ends_at) && <Badge label={t('shift.night')} icon="moon" tone="info" />}
           {ts(shift.starts_at) > now && <Badge label={timeUntil(shift.starts_at, new Date(now))} icon="time" tone="brand" />}
         </View>
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
         <View style={s.kpi}>
-          <Text style={text.muted}>Төлем</Text>
+          <Text style={text.muted}>{t('shift.pay')}</Text>
           <Text style={[text.price, { fontSize: 22 }]}>{formatKzt(shift.pay_kzt)}</Text>
         </View>
         <View style={s.kpi}>
-          <Text style={text.muted}>Сағатына</Text>
+          <Text style={text.muted}>{t('shift.perHour')}</Text>
           <Text style={[text.title, { fontSize: 20 }]}>{formatKzt(hourlyRate(shift.pay_kzt, shift.starts_at, shift.ends_at))}</Text>
         </View>
       </View>
@@ -66,14 +73,17 @@ export default function ShiftDetails() {
         <IconText icon="calendar-outline" color={colors.text}>{dayLabel(shift.starts_at)}</IconText>
         <IconText icon="time-outline" color={colors.text}>{formatTime(shift.starts_at)} – {formatTime(shift.ends_at)} · {formatHours(hours)}</IconText>
         <IconText icon="location-outline" color={colors.text}>{place}</IconText>
-        <Button
-          title="Картадан ашу (2GIS)"
-          icon="map-outline"
-          variant="secondary"
-          size="sm"
-          style={{ marginTop: 12 }}
-          onPress={() => Linking.openURL(`https://2gis.kz/search/${encodeURIComponent(place)}`)}
-        />
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <Button
+            title={t('shift.map')}
+            icon="map-outline"
+            variant="secondary"
+            size="sm"
+            style={{ flex: 1 }}
+            onPress={() => Linking.openURL(`https://2gis.kz/search/${encodeURIComponent(place)}`)}
+          />
+          <Button title={t('common.share')} icon="share-outline" variant="secondary" size="sm" style={{ flex: 1 }} onPress={share} />
+        </View>
       </Card>
 
       {profile?.role === 'business'
@@ -86,63 +96,69 @@ export default function ShiftDetails() {
 // ---------------- Орындаушы әрекеттері ----------------
 function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Partial<ShiftView>) => void }) {
   const { toast, confirm } = useFeedback();
+  const iinGate = useIinGate();
   const [busy, setBusy] = useState(false);
   const status = shift.application_status;
   const now = useNow();
   const future = ts(shift.starts_at) > now;
 
   async function apply() {
-    if (!(await confirm({ title: 'Ауысымға жазылу', message: `${shift.title}\nТөлем: ${formatKzt(shift.pay_kzt)}`, confirm: 'Жазылу' }))) return;
+    if (!(await iinGate())) return;
+    const message = t('feed.applyMsg', { title: shift.title, when: dayLabel(shift.starts_at), pay: formatKzt(shift.pay_kzt) });
+    if (!(await confirm({ title: t('feed.applyTitle'), message, confirm: t('feed.apply'), cancel: t('common.cancel') }))) return;
     setBusy(true);
     const { error } = await supabase.rpc('apply_to_shift', { p_shift_id: shift.id });
     setBusy(false);
-    if (error) return toast(humanError(error), 'error');
+    if (error) {
+      if (isIinMissing(error)) { await iinGate(true); return; }
+      return toast(humanError(error), 'error');
+    }
     onChange({ applied: true, application_status: 'confirmed', spots_left: (shift.spots_left ?? 1) - 1 });
-    toast('Жазылдыңыз!', 'success');
+    toast(t('shift.applied'), 'success');
   }
 
   async function cancel() {
     if (!shift.application_id) return;
-    const ok = await confirm({ title: 'Жазылудан бас тарту', message: 'Орныңыз басқа жұмысшыларға босайды.', confirm: 'Бас тарту', cancel: 'Қалдыру', destructive: true });
+    const ok = await confirm({ title: t('my.cancelTitle'), message: t('my.cancelMsg'), confirm: t('my.cancel'), cancel: t('my.keep'), destructive: true });
     if (!ok) return;
     setBusy(true);
     const { error } = await supabase.rpc('cancel_application', { p_application_id: shift.application_id });
     setBusy(false);
     if (error) return toast(humanError(error), 'error');
     onChange({ applied: false, application_status: 'cancelled' });
-    toast('Бас тарттыңыз', 'info');
+    toast(t('my.cancelled'), 'info');
   }
 
   return (
     <View>
       {shift.spots ? (
         <Card>
-          <Text style={text.muted}>Бос орын: {shift.spots_left ?? 0} / {shift.spots}</Text>
+          <Text style={text.muted}>{t('shift.spotsFree', { left: shift.spots_left ?? 0, spots: shift.spots })}</Text>
           <Progress value={1 - (shift.spots_left ?? 0) / shift.spots} />
         </Card>
       ) : null}
       {status && (
         <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={text.body}>Жазылу күйі</Text>
-          <Badge label={APPLICATION_STATUS[status].label} tone={APPLICATION_STATUS[status].tone} />
+          <Text style={text.body}>{t('shift.applyStatus')}</Text>
+          <Badge label={statusLabel(status)} tone={STATUS_TONE[status]} />
         </Card>
       )}
       {status === 'confirmed' && future && shift.application_id
-        ? <Button title="Жазылудан бас тарту" variant="danger" onPress={cancel} loading={busy} />
+        ? <Button title={t('shift.cancelApply')} variant="danger" onPress={cancel} loading={busy} />
         : !shift.applied && future && (shift.spots_left ?? 0) > 0
-          ? <Button title="Жазылу" icon="flash" onPress={apply} loading={busy} />
+          ? <Button title={t('feed.apply')} icon="flash" onPress={apply} loading={busy} />
           : null}
       {status === 'confirmed' && future && (
-        <Text style={[text.muted, { textAlign: 'center', marginTop: 12 }]}>Ауысымға 10–15 минут ерте келіңіз 🙌</Text>
+        <Text style={[text.muted, { textAlign: 'center', marginTop: 12 }]}>{t('shift.comeEarly')}</Text>
       )}
     </View>
   );
 }
 
 // ---------------- Бизнес әрекеттері ----------------
-const NEXT: Partial<Record<ApplicationStatus, { to: ApplicationStatus; label: string }>> = {
-  confirmed: { to: 'checked_in', label: 'Келді' },
-  checked_in: { to: 'completed', label: 'Аяқтады' },
+const NEXT: Partial<Record<ApplicationStatus, { to: ApplicationStatus; label: () => string }>> = {
+  confirmed: { to: 'checked_in', label: () => t('shift.markIn') },
+  checked_in: { to: 'completed', label: () => t('shift.markDone') },
 };
 
 function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Partial<ShiftView>) => void }) {
@@ -162,12 +178,12 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
   }
 
   async function closeShift() {
-    const ok = await confirm({ title: 'Ауысымды жабу', message: 'Ауысым жұмысшыларға көрінбей қалады. Жабасыз ба?', confirm: 'Жабу', destructive: true });
+    const ok = await confirm({ title: t('shift.close'), message: t('shift.closeMsg'), confirm: t('common.close'), cancel: t('common.cancel'), destructive: true });
     if (!ok) return;
     const { error } = await supabase.from('shifts').update({ status: 'cancelled' }).eq('id', shift.id);
     if (error) return toast(humanError(error), 'error');
     onChange({ status: 'cancelled' });
-    toast('Ауысым жабылды', 'info');
+    toast(t('shift.closed'), 'info');
   }
 
   const active = (applicants ?? []).filter((a) => a.status !== 'cancelled');
@@ -176,27 +192,26 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
   return (
     <View>
       <Card>
-        <Text style={text.muted}>Жазылған: {shift.taken ?? active.length} / {shift.spots ?? '—'}</Text>
+        <Text style={text.muted}>{t('shift.takenOf', { taken: shift.taken ?? active.length, spots: shift.spots ?? '—' })}</Text>
         {shift.spots ? <Progress value={(shift.taken ?? active.length) / shift.spots} /> : null}
       </Card>
 
-      <SectionTitle>Жазылғандар</SectionTitle>
+      <SectionTitle>{t('shift.applicants')}</SectionTitle>
       {q.error && <ErrorBanner message={q.error} onRetry={q.reload} />}
       {applicants === null ? <ActivityIndicator color={colors.brand} style={{ marginVertical: 20 }} /> : applicants.length === 0 ? (
-        <Text style={[text.muted, { marginBottom: 12 }]}>Әзірше ешкім жазылмаған</Text>
+        <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.noApplicants')}</Text>
       ) : (
         <View style={s.list}>
           {applicants.map((a) => {
-            const st = APPLICATION_STATUS[a.status] ?? { label: a.status, tone: 'neutral' as const };
             const next = NEXT[a.status];
             return (
               <View key={a.application_id} style={s.applicant}>
                 <View style={{ flex: 1 }}>
                   <Text style={text.body}>{a.full_name}</Text>
-                  <View style={{ marginTop: 4 }}><Badge label={st.label} tone={st.tone} /></View>
+                  <View style={{ marginTop: 4 }}><Badge label={statusLabel(a.status)} tone={STATUS_TONE[a.status] ?? 'neutral'} /></View>
                 </View>
                 {next && started && (
-                  <Button title={next.label} size="sm" variant="secondary" loading={busyId === a.application_id} onPress={() => setStatus(a, next.to)} style={{ paddingHorizontal: 14, marginTop: 0 }} />
+                  <Button title={next.label()} size="sm" variant="secondary" loading={busyId === a.application_id} onPress={() => setStatus(a, next.to)} style={{ paddingHorizontal: 14, marginTop: 0 }} />
                 )}
               </View>
             );
@@ -204,21 +219,21 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
         </View>
       )}
       {!started && active.length > 0 && (
-        <Text style={[text.muted, { marginBottom: 12 }]}>Ауысым басталғанда жұмысшыларды «Келді» / «Аяқтады» деп белгілей аласыз</Text>
+        <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.markLater')}</Text>
       )}
 
-      <Button title="Көшіріп, жаңа ауысым ашу" icon="copy-outline" variant="secondary" onPress={() => router.push({ pathname: '/create', params: { from: shift.id } })} />
+      <Button title={t('shift.copy')} icon="copy-outline" variant="secondary" onPress={() => router.push({ pathname: '/create', params: { from: shift.id } })} />
       {shift.status === 'open' && ts(shift.ends_at) > now && (
-        <Button title="Ауысымды жабу" variant="danger" icon="close-circle-outline" onPress={closeShift} style={{ marginTop: 10 }} />
+        <Button title={t('shift.close')} variant="danger" icon="close-circle-outline" onPress={closeShift} style={{ marginTop: 10 }} />
       )}
     </View>
   );
 }
 
-const s = StyleSheet.create({
+const s = themed((colors) => ({
   hero: { paddingVertical: 8, marginBottom: 12 },
   catIcon: { width: 52, height: 52, borderRadius: 14, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   kpi: { flex: 1, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: 14 },
   list: { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, marginBottom: 12, overflow: 'hidden' },
-  applicant: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-});
+  applicant: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
+}));

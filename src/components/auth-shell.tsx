@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../lib/theme';
+import { t } from '../lib/i18n';
+import { colors, themed } from '../lib/theme';
 import { text } from '../lib/ui';
+import { LangToggle } from './lang-toggle';
 
 // Кіру/тіркелу экрандарының ортақ қаңқасы: артқа батырмасы, тақырып, төменгі әрекеттер
 export function AuthShell({ title, subtitle, children, footer, onBack, step }: {
@@ -17,7 +19,7 @@ export function AuthShell({ title, subtitle, children, footer, onBack, step }: {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={s.top}>
-          <Pressable accessibilityLabel="Артқа" onPress={back} hitSlop={12} style={s.back}>
+          <Pressable accessibilityLabel={t('common.back')} onPress={back} hitSlop={12} style={s.back}>
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
           {step && (
@@ -27,7 +29,7 @@ export function AuthShell({ title, subtitle, children, footer, onBack, step }: {
               ))}
             </View>
           )}
-          <View style={{ width: 40 }} />
+          <LangToggle />
         </View>
         <ScrollView contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
           <Text style={text.h1}>{title}</Text>
@@ -40,10 +42,10 @@ export function AuthShell({ title, subtitle, children, footer, onBack, step }: {
   );
 }
 
-const s = StyleSheet.create({
+const s = themed((colors) => ({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, height: 52 },
   back: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   body: { padding: 20, paddingTop: 8, flexGrow: 1, maxWidth: 560, width: '100%', alignSelf: 'center' },
   footer: { padding: 20, paddingTop: 8, maxWidth: 560, width: '100%', alignSelf: 'center' },
-});
+}));

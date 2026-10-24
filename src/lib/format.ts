@@ -1,11 +1,12 @@
-const p2 = (n: number) => String(n).padStart(2, '0');
+import { t } from './i18n';
 
-const WEEKDAYS = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
+const p2 = (n: number) => String(n).padStart(2, '0');
 const DAY_MS = 24 * 3600 * 1000;
+const weekdays = () => t('time.weekdays').split(',');
 
 export const ts = (iso: string) => new Date(iso).getTime();
 
-export const formatKzt =(n: number) =>
+export const formatKzt = (n: number) =>
   String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₸';
 
 export const formatTime = (iso: string) => {
@@ -13,10 +14,7 @@ export const formatTime = (iso: string) => {
   return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
 };
 
-export function formatRange(startIso: string, endIso: string) {
-  const s = new Date(startIso);
-  return `${p2(s.getDate())}.${p2(s.getMonth() + 1)}  ${formatTime(startIso)} – ${formatTime(endIso)}`;
-}
+export const formatDate = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
@@ -26,11 +24,11 @@ export const dayOffset = (iso: string, now = new Date()) =>
 
 export function dayLabel(iso: string) {
   const off = dayOffset(iso);
-  if (off === 0) return 'Бүгін';
-  if (off === 1) return 'Ертең';
-  if (off === -1) return 'Кеше';
+  if (off === 0) return t('time.today');
+  if (off === 1) return t('time.tomorrow');
+  if (off === -1) return t('time.yesterday');
   const d = new Date(iso);
-  return `${WEEKDAYS[d.getDay()]}, ${p2(d.getDate())}.${p2(d.getMonth() + 1)}`;
+  return `${weekdays()[d.getDay()]}, ${p2(d.getDate())}.${p2(d.getMonth() + 1)}`;
 }
 
 export const shiftWhen = (startIso: string, endIso: string) =>
@@ -42,8 +40,8 @@ export const hoursBetween = (startIso: string, endIso: string) =>
 export function formatHours(h: number) {
   const whole = Math.floor(h);
   const min = Math.round((h - whole) * 60);
-  if (min === 0) return `${whole} сағ`;
-  return whole ? `${whole} сағ ${min} мин` : `${min} мин`;
+  if (min === 0) return `${whole} ${t('time.h')}`;
+  return whole ? `${whole} ${t('time.h')} ${min} ${t('time.min')}` : `${min} ${t('time.min')}`;
 }
 
 export const hourlyRate = (pay: number, startIso: string, endIso: string) => {
@@ -57,15 +55,14 @@ export function isNightShift(startIso: string, endIso: string) {
   return s >= 22 || s < 5 || dayOffset(endIso, new Date(startIso)) > 0 || e <= 5;
 }
 
-// «3 сағаттан кейін», «2 күннен кейін»
 export function timeUntil(iso: string, now = new Date()) {
   const ms = new Date(iso).getTime() - now.getTime();
-  if (ms <= 0) return 'басталды';
+  if (ms <= 0) return t('time.started');
   const min = Math.round(ms / 60000);
-  if (min < 60) return `${min} минуттан кейін`;
+  if (min < 60) return t('time.inMin', { n: min });
   const h = Math.round(min / 60);
-  if (h < 24) return `${h} сағаттан кейін`;
-  return `${Math.round(h / 24)} күннен кейін`;
+  if (h < 24) return t('time.inHours', { n: h });
+  return t('time.inDays', { n: Math.round(h / 24) });
 }
 
 // Келесі n күн: { iso: 'YYYY-MM-DD', label, sub }
@@ -73,7 +70,7 @@ export function upcomingDays(n: number, now = new Date()) {
   return Array.from({ length: n }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
     const iso = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
-    const label = i === 0 ? 'Бүгін' : i === 1 ? 'Ертең' : WEEKDAYS[d.getDay()];
+    const label = i === 0 ? t('time.today') : i === 1 ? t('time.tomorrow') : weekdays()[d.getDay()];
     return { iso, label, sub: `${p2(d.getDate())}.${p2(d.getMonth() + 1)}` };
   });
 }

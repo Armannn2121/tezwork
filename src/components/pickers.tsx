@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef } from 'react';
-import { Pressable, ScrollView, ScrollViewInstance, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, ScrollViewInstance, Text, View } from 'react-native';
 import { haptic } from '../lib/haptics';
 import { timeSlots, upcomingDays } from '../lib/format';
-import { colors, radius } from '../lib/theme';
+import { colors, radius, themed } from '../lib/theme';
 
 export function DayPicker({ value, onChange, days = 14 }: { value: string; onChange: (iso: string) => void; days?: number }) {
   const items = useMemo(() => upcomingDays(days), [days]);
@@ -53,18 +53,18 @@ export function Stepper({ value, onChange, min = 1, max = 100 }: { value: number
   const set = (n: number) => { haptic.select(); onChange(Math.min(max, Math.max(min, n))); };
   return (
     <View style={s.stepper}>
-      <Pressable accessibilityLabel="Азайту" onPress={() => set(value - 1)} disabled={value <= min} style={[s.stepBtn, value <= min && { opacity: 0.4 }]}>
+      <Pressable accessibilityLabel="−" onPress={() => set(value - 1)} disabled={value <= min} style={[s.stepBtn, value <= min && { opacity: 0.4 }]}>
         <Ionicons name="remove" size={22} color={colors.text} />
       </Pressable>
       <Text style={s.stepValue}>{value}</Text>
-      <Pressable accessibilityLabel="Көбейту" onPress={() => set(value + 1)} disabled={value >= max} style={[s.stepBtn, value >= max && { opacity: 0.4 }]}>
+      <Pressable accessibilityLabel="+" onPress={() => set(value + 1)} disabled={value >= max} style={[s.stepBtn, value >= max && { opacity: 0.4 }]}>
         <Ionicons name="add" size={22} color={colors.text} />
       </Pressable>
     </View>
   );
 }
 
-const s = StyleSheet.create({
+const s = themed((colors) => ({
   day: { width: 64, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, alignItems: 'center' },
   dayLabel: { color: colors.text, fontWeight: '700', fontSize: 13 },
   daySub: { color: colors.muted, fontSize: 12, marginTop: 2 },
@@ -74,4 +74,4 @@ const s = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, marginBottom: 14 },
   stepBtn: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   stepValue: { color: colors.text, fontSize: 18, fontWeight: '800', minWidth: 44, textAlign: 'center' },
-});
+}));

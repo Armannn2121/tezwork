@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { formatHours, formatKzt, hourlyRate, hoursBetween, isNightShift, shiftWhen } from '../lib/format';
+import { cityName } from '../lib/cities';
+import { t } from '../lib/i18n';
 import { categoryOf, ShiftView } from '../lib/types';
 import { Badge, Card, colors, IconText, Progress, text } from '../lib/ui';
 
@@ -23,17 +25,17 @@ export function ShiftCard({ shift: s, onPress, badges, footer, showProgress }: {
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={text.price}>{formatKzt(s.pay_kzt)}</Text>
-          <Text style={{ color: colors.faint, fontSize: 12 }}>{formatKzt(hourlyRate(s.pay_kzt, s.starts_at, s.ends_at))}/сағ</Text>
+          <Text style={{ color: colors.faint, fontSize: 12 }}>{formatKzt(hourlyRate(s.pay_kzt, s.starts_at, s.ends_at))}{t('time.perHour')}</Text>
         </View>
       </View>
 
       <View style={{ marginTop: 10 }}>
         <IconText icon="time-outline" color={colors.text}>{shiftWhen(s.starts_at, s.ends_at)} · {formatHours(hours)}</IconText>
-        <IconText icon="location-outline">{s.city}{s.address ? `, ${s.address}` : ''}</IconText>
+        <IconText icon="location-outline">{cityName(s.city)}{s.address ? `, ${s.address}` : ''}</IconText>
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-        {isNightShift(s.starts_at, s.ends_at) && <Badge label="Түнгі" icon="moon" tone="info" />}
+        {isNightShift(s.starts_at, s.ends_at) && <Badge label={t('shift.night')} icon="moon" tone="info" />}
         {badges}
       </View>
 
@@ -41,7 +43,7 @@ export function ShiftCard({ shift: s, onPress, badges, footer, showProgress }: {
         <View>
           <Progress value={filled} />
           <Text style={{ color: colors.faint, fontSize: 12, marginTop: 6 }}>
-            {s.taken ?? s.spots - (s.spots_left ?? 0)} / {s.spots} орын толды
+            {t('shift.filled', { taken: s.taken ?? s.spots - (s.spots_left ?? 0), spots: s.spots })}
           </Text>
         </View>
       ) : null}

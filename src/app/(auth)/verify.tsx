@@ -6,7 +6,8 @@ import { OTP_LENGTH, OtpInput } from '../../components/otp-input';
 import { humanError } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
 import { formatPhone } from '../../lib/format';
-import { getDraft } from '../../lib/registration';
+import { t } from '../../lib/i18n';
+import { getDraft, publicMetadata } from '../../lib/registration';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
 import { Button, text } from '../../lib/ui';
@@ -24,8 +25,8 @@ export default function Verify() {
 
   useEffect(() => {
     if (left <= 0) return;
-    const t = setTimeout(() => setLeft(left - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setLeft(left - 1), 1000);
+    return () => clearTimeout(timer);
   }, [left]);
 
   async function verify(token: string) {
@@ -34,7 +35,7 @@ export default function Verify() {
     const { error: e } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
     setBusy(false);
     if (e) { setError(humanError(e)); setCode(''); return; }
-    toast(mode === 'register' ? 'Тіркелу сәтті аяқталды!' : 'Қош келдіңіз!', 'success');
+    toast(mode === 'register' ? t('verify.registered') : t('verify.welcomeBack'), 'success');
     // Сессия пайда болғанда _layout.tsx-тегі Stack.Protected өзі басты бетке ауыстырады
   }
 
@@ -49,27 +50,27 @@ export default function Verify() {
     const draft = mode === 'register' ? getDraft() : null;
     const { error: e } = await supabase.auth.signInWithOtp({
       phone,
-      options: mode === 'register' ? { data: draft ?? undefined } : { shouldCreateUser: false },
+      options: mode === 'register' ? { data: draft ? publicMetadata(draft) : undefined } : { shouldCreateUser: false },
     });
     if (e) { setError(humanError(e)); setLeft(0); }
-    else toast('Жаңа код жіберілді', 'info');
+    else toast(t('verify.resent'), 'info');
   }
 
   return (
     <AuthShell
-      title="SMS-кодты енгізіңіз"
-      subtitle={`${formatPhone(phone)} нөміріне ${OTP_LENGTH} таңбалы код жіберілді`}
+      title={t('verify.title')}
+      subtitle={t('verify.subtitle', { phone: formatPhone(phone), n: OTP_LENGTH })}
       step={mode === 'register' ? { index: 2, total: 3 } : undefined}
-      footer={<Button title="Растау" onPress={() => verify(code)} loading={busy} disabled={code.length < OTP_LENGTH} />}
+      footer={<Button title={t('verify.confirm')} onPress={() => verify(code)} loading={busy} disabled={code.length < OTP_LENGTH} />}
     >
       <OtpInput value={code} onChange={onChange} error={!!error} />
       {error && <Text style={{ color: colors.danger, marginBottom: 12 }}>{error}</Text>}
       {busy && <ActivityIndicator color={colors.brand} style={{ marginBottom: 12 }} />}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         {left > 0
-          ? <Text style={text.muted}>Қайта жіберу: 0:{String(left).padStart(2, '0')}</Text>
-          : <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={resend}>Кодты қайта жіберу</Text>}
-        <Text style={{ color: colors.muted, fontWeight: '600' }} onPress={() => router.back()}>Нөмірді өзгерту</Text>
+          ? <Text style={text.muted}>{t('verify.resendIn', { time: `0:${String(left).padStart(2, '0')}` })}</Text>
+          : <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={resend}>{t('verify.resend')}</Text>}
+        <Text style={{ color: colors.muted, fontWeight: '600' }} onPress={() => router.back()}>{t('verify.changePhone')}</Text>
       </View>
     </AuthShell>
   );

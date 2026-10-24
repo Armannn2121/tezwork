@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tezwork",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -28,18 +28,23 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B0F19",
+          "backgroundColor": "#F5F7FB",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 76,
+          "dark": {
+            "backgroundColor": "#0B0F19",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
       ],
       "expo-status-bar",
-      "expo-image"
+      "expo-image",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#0B0F19"
+    "backgroundColor": "#F5F7FB"
   }
 }

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ReactNode, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle,
+  ActivityIndicator, Pressable, ScrollView, StyleProp, Text, TextInput, TextInputProps, View, ViewStyle,
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { haptic } from './haptics';
-import { colors, radius, Tone, toneColors } from './theme';
+import { t } from './i18n';
+import { colors, radius, themed, Tone, toneColor } from './theme';
 import { IconName } from './types';
 
 export { colors } from './theme';
@@ -129,7 +130,7 @@ export function Card({ children, style, onPress }: { children: ReactNode; style?
 }
 
 export function Badge({ label, tone = 'neutral', icon }: { label: string; tone?: Tone; icon?: IconName }) {
-  const c = toneColors[tone];
+  const c = toneColor(tone);
   return (
     <View style={[s.badge, { backgroundColor: c.bg }]}>
       {icon && <Ionicons name={icon} size={12} color={c.fg} />}
@@ -184,7 +185,7 @@ export function ErrorBanner({ message, onRetry }: { message: string; onRetry?: (
     <View style={s.errorBanner}>
       <Ionicons name="alert-circle" size={18} color={colors.danger} />
       <Text style={{ color: colors.text, flex: 1, fontSize: 13 }}>{message}</Text>
-      {onRetry && <Text onPress={onRetry} style={{ color: colors.brand, fontWeight: '700' }}>Қайталау</Text>}
+      {onRetry && <Text onPress={onRetry} style={{ color: colors.brand, fontWeight: '700' }}>{t('common.retry')}</Text>}
     </View>
   );
 }
@@ -215,16 +216,16 @@ export function SectionTitle({ children }: { children: ReactNode }) {
   return <Text style={s.section}>{children}</Text>;
 }
 
-export const text = StyleSheet.create({
+export const text = themed((colors) => ({
   title: { color: colors.text, fontSize: 17, fontWeight: '700' },
   body: { color: colors.text, fontSize: 14 },
   muted: { color: colors.muted, fontSize: 13 },
   price: { color: colors.brand, fontSize: 18, fontWeight: '800' },
   h1: { color: colors.text, fontSize: 28, fontWeight: '800', marginBottom: 6 },
   h2: { color: colors.text, fontSize: 21, fontWeight: '800' },
-});
+}));
 
-const s = StyleSheet.create({
+const s = themed((colors) => ({
   btn: { borderRadius: radius.md, borderWidth: 1, paddingVertical: 14, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', marginTop: 6, minHeight: 50 },
   btnSm: { paddingVertical: 9, minHeight: 38, borderRadius: radius.sm },
   btnRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -245,4 +246,4 @@ const s = StyleSheet.create({
   emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.dangerSoft, borderRadius: radius.md, padding: 12, marginBottom: 12 },
   section: { color: colors.muted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 8, marginBottom: 10 },
-});
+}));

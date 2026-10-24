@@ -1,15 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { CityField } from '../../components/city-picker';
 import { DayPicker, Stepper, TimePicker } from '../../components/pickers';
 import { ShiftCard } from '../../components/shift-card';
 import { humanError } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
 import { formatHours, formatKzt, formatTime, hoursBetween, upcomingDays } from '../../lib/format';
+import { DEFAULT_CITY } from '../../lib/cities';
+import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
 import { getShift } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
-import { CATEGORIES, CITIES } from '../../lib/types';
+import { categories } from '../../lib/types';
 import { Button, Chips, colors, Field, SectionTitle, Segmented, text } from '../../lib/ui';
 
 // Қазақстан уақыты: UTC+5
@@ -41,7 +44,7 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
   const src = from ? getShift(from) : undefined;
   const [title, setTitle] = useState(src?.title ?? '');
   const [category, setCategory] = useState(src?.category ?? 'retail');
-  const [city, setCity] = useState(src?.city ?? profile?.city ?? CITIES[0]);
+  const [city, setCity] = useState(src?.city ?? profile?.city ?? DEFAULT_CITY);
   const [address, setAddress] = useState(src?.address ?? '');
   const [date, setDate] = useState(tomorrow);
   const [start, setStart] = useState(src ? formatTime(src.starts_at) : '09:00');
@@ -60,12 +63,12 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
   async function save() {
     if (!session) return;
     const e: Errors = {};
-    if (title.trim().length < 3) e.title = 'Жұмыс атауын жазыңыз (кемінде 3 әріп)';
-    if (startsAt <= new Date()) e.time = 'Ауысым болашақта басталуы керек';
-    else if (hours > 16) e.time = 'Ауысым 16 сағаттан ұзақ болмауы керек';
-    if (!(total > 0)) e.pay = 'Төлем сомасын жазыңыз';
+    if (title.trim().length < 3) e.title = t('create.titleErr');
+    if (startsAt <= new Date()) e.time = t('create.timeFuture');
+    else if (hours > 16) e.time = t('create.timeLong');
+    if (!(total > 0)) e.pay = t('create.payErr');
     setErrors(e);
-    if (Object.keys(e).length) return toast('Форманы тексеріңіз', 'error');
+    if (Object.keys(e).length) return toast(t('err.formCheck'), 'error');
 
     setBusy(true);
     const { error } = await supabase.from('shifts').insert({
@@ -77,7 +80,7 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
     });
     setBusy(false);
     if (error) return toast(humanError(error), 'error');
-    toast('Ауысым жарияланды!', 'success');
+    toast(t('create.published'), 'success');
     if (from) router.setParams({ from: undefined });
     onDone();
     router.navigate('/');
@@ -92,48 +95,48 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
       >
         {src && (
           <View style={{ backgroundColor: colors.infoSoft, borderRadius: 12, padding: 12, marginBottom: 14 }}>
-            <Text style={{ color: colors.info, fontWeight: '600' }}>Бұрынғы ауысымнан көшірілді — күнін таңдаңыз</Text>
+            <Text style={{ color: colors.info, fontWeight: '600' }}>{t('create.copied')}</Text>
           </View>
         )}
 
-        <SectionTitle>Жұмыс</SectionTitle>
-        <Field label="Жұмыс атауы" value={title} onChangeText={(t) => { setTitle(t); setErrors({ ...errors, title: undefined }); }} placeholder="Мысалы: тапсырыс жинаушы" error={errors.title} />
-        <Chips label="Санат" scroll options={CATEGORIES} value={category} onChange={setCategory} />
+        <SectionTitle>{t('create.secJob')}</SectionTitle>
+        <Field label={t('create.title')} value={title} onChangeText={(v) => { setTitle(v); setErrors({ ...errors, title: undefined }); }} placeholder={t('create.titlePh')} error={errors.title} />
+        <Chips label={t('create.category')} scroll options={categories()} value={category} onChange={setCategory} />
 
-        <SectionTitle>Орны</SectionTitle>
-        <Chips label="Қала" options={CITIES.map((c) => ({ id: c, label: c }))} value={city} onChange={setCity} />
-        <Field label="Мекенжай" value={address} onChangeText={setAddress} placeholder="Абай даңғ. 109" />
+        <SectionTitle>{t('create.secPlace')}</SectionTitle>
+        <CityField value={city} onChange={setCity} />
+        <Field label={t('create.address')} value={address} onChangeText={setAddress} placeholder={t('create.addressPh')} />
 
-        <SectionTitle>Уақыты</SectionTitle>
-        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>Күні</Text>
+        <SectionTitle>{t('create.secTime')}</SectionTitle>
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.date')}</Text>
         <DayPicker value={date} onChange={(d) => { setDate(d); setErrors({ ...errors, time: undefined }); }} />
-        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>Басталуы</Text>
-        <TimePicker value={start} onChange={(t) => { setStart(t); setErrors({ ...errors, time: undefined }); }} />
-        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>Аяқталуы</Text>
-        <TimePicker value={end} onChange={(t) => { setEnd(t); setErrors({ ...errors, time: undefined }); }} />
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.start')}</Text>
+        <TimePicker value={start} onChange={(v) => { setStart(v); setErrors({ ...errors, time: undefined }); }} />
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.end')}</Text>
+        <TimePicker value={end} onChange={(v) => { setEnd(v); setErrors({ ...errors, time: undefined }); }} />
         <Text style={[text.muted, { marginBottom: 14, color: errors.time ? colors.danger : colors.muted }]}>
-          {errors.time ?? `Ұзақтығы: ${formatHours(hours)}${endsAt.getDate() !== startsAt.getDate() ? ' (келесі күні аяқталады)' : ''}`}
+          {errors.time ?? `${t('create.duration', { d: formatHours(hours) })}${endsAt.getDate() !== startsAt.getDate() ? ` ${t('time.nextDay')}` : ''}`}
         </Text>
 
-        <SectionTitle>Төлем және адам саны</SectionTitle>
-        <Segmented options={[{ id: 'shift', label: 'Ауысымға' }, { id: 'hour', label: 'Сағатына' }]} value={payMode} onChange={setPayMode} />
+        <SectionTitle>{t('create.secPay')}</SectionTitle>
+        <Segmented options={[{ id: 'shift', label: t('create.perShift') }, { id: 'hour', label: t('create.perHour') }]} value={payMode} onChange={setPayMode} />
         <Field
-          label={payMode === 'hour' ? 'Сағатына төлем (₸)' : 'Бір адамға ауысымға төлем (₸)'}
+          label={payMode === 'hour' ? t('create.payHour') : t('create.payShift')}
           value={pay}
-          onChangeText={(t) => { setPay(t.replace(/\D/g, '')); setErrors({ ...errors, pay: undefined }); }}
+          onChangeText={(v) => { setPay(v.replace(/\D/g, '')); setErrors({ ...errors, pay: undefined }); }}
           keyboardType="number-pad"
           placeholder={payMode === 'hour' ? '2000' : '15000'}
           error={errors.pay}
           hint={payN > 0 ? (payMode === 'hour'
-            ? `Ауысымға: ${formatKzt(total)}`
-            : `≈ ${formatKzt(hours ? payN / hours : 0)}/сағ`) : undefined}
+            ? t('create.payPerShiftHint', { pay: formatKzt(total) })
+            : t('create.payPerHourHint', { pay: formatKzt(hours ? payN / hours : 0) })) : undefined}
         />
-        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>Қанша адам керек</Text>
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.spots')}</Text>
         <Stepper value={spots} onChange={setSpots} max={200} />
 
         {title.trim().length >= 3 && total > 0 && (
           <>
-            <SectionTitle>Жұмысшылар осылай көреді</SectionTitle>
+            <SectionTitle>{t('create.preview')}</SectionTitle>
             <ShiftCard
               shift={{
                 id: 'preview', title: title.trim(), category, city, address: address.trim() || null,
@@ -141,11 +144,11 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
                 company_name: profile?.company_name, spots, spots_left: spots,
               }}
             />
-            <Text style={[text.muted, { marginBottom: 6 }]}>Барлық шығын: {formatKzt(total * spots)}</Text>
+            <Text style={[text.muted, { marginBottom: 6 }]}>{t('create.total', { pay: formatKzt(total * spots) })}</Text>
           </>
         )}
 
-        <Button title="Жариялау" icon="paper-plane-outline" onPress={save} loading={busy} style={{ marginTop: 10 }} />
+        <Button title={t('create.publish')} icon="paper-plane-outline" onPress={save} loading={busy} style={{ marginTop: 10 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

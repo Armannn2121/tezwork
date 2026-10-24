@@ -1,84 +1,67 @@
 import { Ionicons } from '@expo/vector-icons';
-import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { humanError } from '../../lib/errors';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { MenuGroup, MenuRow } from '../../components/menu-row';
+import { cityName } from '../../lib/cities';
 import { useFeedback } from '../../lib/feedback';
 import { formatPhone, initials } from '../../lib/format';
+import { t } from '../../lib/i18n';
+import { maskIin } from '../../lib/kz-id';
 import { useSession } from '../../lib/session';
-import { supabase } from '../../lib/supabase';
-import { colors, radius } from '../../lib/theme';
-import { IconName } from '../../lib/types';
+import { colors, radius, themed } from '../../lib/theme';
 import { Badge, text } from '../../lib/ui';
-
-function Row({ icon, label, onPress, danger, value }: { icon: IconName; label: string; onPress?: () => void; danger?: boolean; value?: string }) {
-  const c = danger ? colors.danger : colors.text;
-  return (
-    <Pressable onPress={onPress} disabled={!onPress} style={({ pressed }) => [s.row, pressed && { backgroundColor: colors.cardAlt }]}>
-      <Ionicons name={icon} size={20} color={danger ? colors.danger : colors.muted} />
-      <Text style={{ color: c, fontSize: 15, fontWeight: '600', flex: 1 }}>{label}</Text>
-      {value && <Text style={text.muted}>{value}</Text>}
-      {!danger && onPress && <Ionicons name="chevron-forward" size={18} color={colors.faint} />}
-    </Pressable>
-  );
-}
 
 export default function Profile() {
   const router = useRouter();
-  const { profile, session, signOut } = useSession();
-  const { toast, confirm } = useFeedback();
+  const { profile, session, iin, signOut } = useSession();
+  const { confirm } = useFeedback();
   const isBiz = profile?.role === 'business';
 
   async function logout() {
-    if (await confirm({ title: 'Шығу', message: 'Аккаунттан шығасыз ба?', confirm: 'Шығу' })) await signOut();
-  }
-
-  async function deleteAccount() {
-    const ok = await confirm({
-      title: 'Аккаунтты жою',
-      message: 'Барлық деректеріңіз біржола жойылады. Бұл әрекетті қайтару мүмкін емес.',
-      confirm: 'Жою', destructive: true,
-    });
-    if (!ok) return;
-    const { error } = await supabase.rpc('delete_my_account');
-    if (error) return toast(humanError(error), 'error');
-    await signOut();
+    if (await confirm({ title: t('settings.logout'), message: t('settings.logoutMsg'), confirm: t('settings.logout'), cancel: t('common.cancel') })) {
+      await signOut();
+    }
   }
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
       <View style={s.hero}>
         <View style={s.avatar}><Text style={s.avatarText}>{initials(profile?.full_name)}</Text></View>
-        <Text style={[text.h2, { marginTop: 12 }]}>{profile?.full_name}</Text>
+        <Text style={[text.h2, { marginTop: 12, textAlign: 'center' }]}>{profile?.full_name}</Text>
         {isBiz && !!profile?.company_name && <Text style={[text.muted, { fontSize: 15 }]}>{profile.company_name}</Text>}
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
-          <Badge label={isBiz ? 'Бизнес' : 'Орындаушы'} icon={isBiz ? 'business' : 'person'} tone="brand" />
-          <Badge label={profile?.city ?? ''} icon="location" tone="neutral" />
+          <Badge label={isBiz ? t('role.business') : t('role.worker')} icon={isBiz ? 'business' : 'person'} tone="brand" />
+          <Badge label={cityName(profile?.city ?? '')} icon="location" tone="neutral" />
         </View>
       </View>
 
-      <View style={s.group}>
-        <Row icon="create-outline" label="Профильді өңдеу" onPress={() => router.push('/profile-edit')} />
-        <Row icon="call-outline" label="Телефон" value={formatPhone(session?.user.phone)} />
+      {!isBiz && !iin && (
+        <Pressable onPress={() => router.push('/profile-edit')} style={s.warn}>
+          <Ionicons name="alert-circle" size={20} color={colors.warn} />
+          <Text style={{ color: colors.text, flex: 1, fontWeight: '600' }}>{t('profile.iinWarn')}</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.warn} />
+        </Pressable>
+      )}
+
+      <MenuGroup>
+        <MenuRow icon="create-outline" label={t('profile.edit')} onPress={() => router.push('/profile-edit')} />
+        <MenuRow icon="call-outline" label={t('profile.phone')} value={formatPhone(session?.user.phone)} />
         {isBiz
-          ? <Row icon="add-circle-outline" label="Жаңа ауысым" onPress={() => router.navigate('/create')} />
-          : <Row icon="calendar-outline" label="Жазылымдарым" onPress={() => router.navigate('/my')} />}
-      </View>
+          ? <MenuRow icon="add-circle-outline" label={t('profile.newShift')} onPress={() => router.navigate('/create')} last />
+          : <MenuRow icon="card-outline" label={t('profile.iin')} value={iin ? maskIin(iin) : t('profile.iinMissing')} onPress={iin ? undefined : () => router.push('/profile-edit')} last />}
+      </MenuGroup>
 
-      <View style={s.group}>
-        <Row icon="log-out-outline" label="Шығу" onPress={logout} />
-        <Row icon="trash-outline" label="Аккаунтты жою" danger onPress={deleteAccount} />
-      </View>
-
-      <Text style={[text.muted, { textAlign: 'center', marginTop: 8, fontSize: 12 }]}>TezWork v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+      <MenuGroup>
+        <MenuRow icon="settings-outline" label={t('profile.settings')} onPress={() => router.push('/settings')} />
+        <MenuRow icon="log-out-outline" label={t('settings.logout')} onPress={logout} last />
+      </MenuGroup>
     </ScrollView>
   );
 }
 
-const s = StyleSheet.create({
+const s = themed((c) => ({
   hero: { alignItems: 'center', paddingVertical: 20 },
-  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.brandSoft, borderWidth: 2, borderColor: colors.brand, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: colors.brand, fontSize: 30, fontWeight: '800' },
-  group: { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, overflow: 'hidden', marginBottom: 14 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 15, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-});
+  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: c.brandSoft, borderWidth: 2, borderColor: c.brand, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: c.brand, fontSize: 30, fontWeight: '800' },
+  warn: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.warnSoft, borderRadius: radius.md, padding: 14, marginBottom: 14 },
+}));

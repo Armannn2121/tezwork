@@ -1,35 +1,33 @@
 import { useState } from 'react';
+import { View } from 'react-native';
 import { AuthShell } from '../components/auth-shell';
+import { ConsentCheckbox } from '../components/consent';
 import { ProfileFields, RolePicker } from '../components/profile-form';
 import { humanError } from '../lib/errors';
 import { useFeedback } from '../lib/feedback';
-import { RegistrationDraft, validateDraft } from '../lib/registration';
-import { useSession } from '../lib/session';
-import { supabase } from '../lib/supabase';
-import { CITIES } from '../lib/types';
+import { t } from '../lib/i18n';
+import { DraftErrors, emptyDraft, RegistrationDraft, validateDraft } from '../lib/registration';
+import { insertProfile, useSession } from '../lib/session';
 import { Button, SectionTitle } from '../lib/ui';
 
 // Сессия бар, бірақ профиль жоқ болған жағдайда (мысалы, тіркелу аяқталмай қалса)
 export default function Onboarding() {
   const { session, refreshProfile, signOut } = useSession();
   const { toast } = useFeedback();
-  const [form, setForm] = useState<RegistrationDraft>({ role: 'worker', full_name: '', company_name: '', city: CITIES[0] });
-  const [errors, setErrors] = useState<ReturnType<typeof validateDraft>>({});
+  const [form, setForm] = useState<RegistrationDraft>(emptyDraft);
+  const [errors, setErrors] = useState<DraftErrors>({});
+  const [agreed, setAgreed] = useState(false);
+  const [consentError, setConsentError] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function save() {
     if (!session) return;
-    const e = validateDraft(form);
+    const e = validateDraft(form, { requireIin: true });
     setErrors(e);
     if (Object.keys(e).length) return;
+    if (!agreed) return setConsentError(true);
     setBusy(true);
-    const { error } = await supabase.from('profiles').insert({
-      id: session.user.id,
-      role: form.role,
-      full_name: form.full_name.trim(),
-      company_name: form.role === 'business' ? form.company_name?.trim() || null : null,
-      city: form.city,
-    });
+    const { error } = await insertProfile(session.user.id, form);
     if (error) { setBusy(false); return toast(humanError(error), 'error'); }
     await refreshProfile();
     setBusy(false);
@@ -37,14 +35,17 @@ export default function Onboarding() {
 
   return (
     <AuthShell
-      title="Профильді аяқтаңыз"
-      subtitle="Бірнеше дерек қалды — сосын жұмысты бастай аласыз"
+      title={t('onb.title')}
+      subtitle={t('onb.subtitle')}
       onBack={signOut}
-      footer={<Button title="Дайын" icon="checkmark" onPress={save} loading={busy} />}
+      footer={<Button title={t('common.done')} icon="checkmark" onPress={save} loading={busy} />}
     >
       <RolePicker value={form.role} onChange={(role) => setForm({ ...form, role })} />
-      <SectionTitle>Деректер</SectionTitle>
+      <SectionTitle>{t('onb.data')}</SectionTitle>
       <ProfileFields value={form} onChange={(f) => { setForm(f); setErrors({}); }} errors={errors} />
+      <View style={{ marginTop: 4 }}>
+        <ConsentCheckbox value={agreed} onChange={(v) => { setAgreed(v); setConsentError(false); }} error={consentError} />
+      </View>
     </AuthShell>
   );
 }

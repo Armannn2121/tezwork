@@ -5,9 +5,10 @@ import { ShiftCard } from '../../components/shift-card';
 import { humanError } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
 import { formatKzt, timeUntil, ts } from '../../lib/format';
+import { t } from '../../lib/i18n';
 import { putApplications } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
-import { APPLICATION_STATUS, MyApplication } from '../../lib/types';
+import { MyApplication, STATUS_TONE, statusLabel } from '../../lib/types';
 import { useFocusQuery } from '../../lib/use-focus-query';
 import { useNow } from '../../lib/use-now';
 import { Badge, Button, CardSkeletons, colors, EmptyState, ErrorBanner, Segmented, Stat, text } from '../../lib/ui';
@@ -32,32 +33,32 @@ export default function MyApplications() {
 
   async function cancel(a: MyApplication) {
     const ok = await confirm({
-      title: 'Жазылудан бас тарту',
-      message: 'Орныңыз босап, басқа жұмысшыларға қолжетімді болады.',
-      confirm: 'Бас тарту', cancel: 'Қалдыру', destructive: true,
+      title: t('my.cancelTitle'),
+      message: t('my.cancelMsg'),
+      confirm: t('my.cancel'), cancel: t('my.keep'), destructive: true,
     });
     if (!ok) return;
     const { error } = await supabase.rpc('cancel_application', { p_application_id: a.application_id });
     if (error) return toast(humanError(error), 'error');
-    toast('Жазылудан бас тарттыңыз', 'info');
+    toast(t('my.cancelled'), 'info');
     q.reload();
   }
 
   const header = (
     <View>
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-        <Stat icon="wallet-outline" label="Табыс" value={formatKzt(earned)} />
-        <Stat icon="hourglass-outline" label="Күтілуде" value={formatKzt(expected)} />
-        <Stat icon="checkmark-done-outline" label="Ауысым" value={String(completed.length)} />
+        <Stat icon="wallet-outline" label={t('my.earned')} value={formatKzt(earned)} />
+        <Stat icon="hourglass-outline" label={t('my.expected')} value={formatKzt(expected)} />
+        <Stat icon="checkmark-done-outline" label={t('my.shifts')} value={String(completed.length)} />
       </View>
       {next && (
         <View style={{ backgroundColor: colors.brandSoft, borderRadius: 14, padding: 14, marginBottom: 14 }}>
-          <Text style={{ color: colors.brand, fontWeight: '800' }}>Келесі ауысым {timeUntil(next.starts_at, new Date(now))}</Text>
+          <Text style={{ color: colors.brand, fontWeight: '800' }}>{t('my.next', { when: timeUntil(next.starts_at, new Date(now)) })}</Text>
           <Text style={[text.body, { marginTop: 2 }]} numberOfLines={1}>{next.title} · {next.company_name}</Text>
         </View>
       )}
       <Segmented
-        options={[{ id: 'upcoming', label: `Алдағы (${upcoming.length})` }, { id: 'history', label: `Тарих (${history.length})` }]}
+        options={[{ id: 'upcoming', label: t('my.upcoming', { n: upcoming.length }) }, { id: 'history', label: t('my.history', { n: history.length }) }]}
         value={tab}
         onChange={setTab}
       />
@@ -76,20 +77,19 @@ export default function MyApplications() {
       ListEmptyComponent={q.loading ? <CardSkeletons count={2} /> : (
         <EmptyState
           icon={tab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
-          title={tab === 'upcoming' ? 'Алдағы ауысым жоқ' : 'Тарих бос'}
-          subtitle={tab === 'upcoming' ? 'Ыңғайлы ауысымды тауып, бір түртумен жазылыңыз' : 'Аяқталған ауысымдарыңыз осында шығады'}
-          action={tab === 'upcoming' ? { title: 'Жұмыс іздеу', onPress: () => router.navigate('/') } : undefined}
+          title={tab === 'upcoming' ? t('my.emptyUpcoming') : t('my.emptyHistory')}
+          subtitle={tab === 'upcoming' ? t('my.emptyUpcomingSub') : t('my.emptyHistorySub')}
+          action={tab === 'upcoming' ? { title: t('my.findWork'), onPress: () => router.navigate('/') } : undefined}
         />
       )}
       renderItem={({ item: a }) => {
-        const st = APPLICATION_STATUS[a.status] ?? { label: a.status, tone: 'neutral' as const };
         return (
           <ShiftCard
             shift={{ id: a.shift_id, title: a.title, city: a.city, address: a.address, starts_at: a.starts_at, ends_at: a.ends_at, pay_kzt: a.pay_kzt, company_name: a.company_name }}
             onPress={() => router.push({ pathname: '/shift/[id]', params: { id: a.shift_id } })}
-            badges={<Badge label={st.label} tone={st.tone} />}
+            badges={<Badge label={statusLabel(a.status)} tone={STATUS_TONE[a.status] ?? 'neutral'} />}
             footer={a.status === 'confirmed' && ts(a.starts_at) > now
-              ? <Button title="Бас тарту" variant="ghost" size="sm" onPress={() => cancel(a)} />
+              ? <Button title={t('my.cancel')} variant="ghost" size="sm" onPress={() => cancel(a)} />
               : null}
           />
         );

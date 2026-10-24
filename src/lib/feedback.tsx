@@ -4,7 +4,8 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from './haptics';
-import { colors, radius } from './theme';
+import { t } from './i18n';
+import { colors, radius, themed } from './theme';
 import { Button } from './ui';
 
 // Alert.alert вебте жұмыс істемейді, сондықтан toast пен растау терезесі өзіміздікі
@@ -25,7 +26,7 @@ const Ctx = createContext<FeedbackApi>({ toast: () => {}, confirm: async () => f
 export const useFeedback = () => useContext(Ctx);
 
 const ICON = { success: 'checkmark-circle', error: 'alert-circle', info: 'information-circle' } as const;
-const TINT = { success: colors.brand, error: colors.danger, info: colors.info };
+const tint = (type: ToastType) => ({ success: colors.brand, error: colors.danger, info: colors.info }[type]);
 
 export function FeedbackProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -55,10 +56,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider value={{ toast, confirm }}>
       {children}
       <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { paddingTop: insets.top + 8 }]}>
-        {toasts.map((t) => (
-          <Animated.View key={t.id} entering={FadeInUp} exiting={FadeOutUp} style={st.toast}>
-            <Ionicons name={ICON[t.type]} size={20} color={TINT[t.type]} />
-            <Text style={st.toastText}>{t.message}</Text>
+        {toasts.map((x) => (
+          <Animated.View key={x.id} entering={FadeInUp} exiting={FadeOutUp} style={st.toast}>
+            <Ionicons name={ICON[x.type]} size={20} color={tint(x.type)} />
+            <Text style={st.toastText}>{x.message}</Text>
           </Animated.View>
         ))}
       </View>
@@ -68,9 +69,9 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
             <Text style={st.title}>{dialog?.title}</Text>
             {dialog?.message && <Text style={st.message}>{dialog.message}</Text>}
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-              <Button title={dialog?.cancel ?? 'Жоқ'} variant="ghost" onPress={() => close(false)} style={{ flex: 1 }} />
+              <Button title={dialog?.cancel ?? t('common.no')} variant="ghost" onPress={() => close(false)} style={{ flex: 1 }} />
               <Button
-                title={dialog?.confirm ?? 'Иә'}
+                title={dialog?.confirm ?? t('common.yes')}
                 variant={dialog?.destructive ? 'danger' : 'primary'}
                 onPress={() => close(true)}
                 style={{ flex: 1 }}
@@ -83,7 +84,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   );
 }
 
-const st = StyleSheet.create({
+const st = themed((colors) => ({
   toast: {
     flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'center', maxWidth: 520, width: '92%',
     backgroundColor: colors.cardAlt, borderColor: colors.border, borderWidth: 1, borderRadius: radius.md,
@@ -95,4 +96,4 @@ const st = StyleSheet.create({
   dialog: { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: 20, maxWidth: 440, width: '100%', alignSelf: 'center' },
   title: { color: colors.text, fontSize: 18, fontWeight: '800' },
   message: { color: colors.muted, fontSize: 14, marginTop: 8, lineHeight: 20 },
-});
+}));

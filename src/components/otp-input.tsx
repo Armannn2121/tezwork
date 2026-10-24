@@ -1,6 +1,6 @@
 import { useRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, TextInputInstance, View } from 'react-native';
-import { colors, radius } from '../lib/theme';
+import { Pressable, Text, TextInput, TextInputInstance, View } from 'react-native';
+import { colors, radius, themed } from '../lib/theme';
 
 export const OTP_LENGTH = 6;
 
@@ -33,7 +33,7 @@ export function OtpInput({ value, onChange, error }: { value: string; onChange: 
   );
 }
 
-const s = StyleSheet.create({
+const s = themed((colors) => ({
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginBottom: 16 },
   cell: {
     flex: 1, maxWidth: 56, aspectRatio: 0.85, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border,
@@ -41,4 +41,4 @@ const s = StyleSheet.create({
   },
   digit: { color: colors.text, fontSize: 24, fontWeight: '800' },
   hidden: { position: 'absolute', opacity: 0, width: '100%', height: '100%' },
-});
+}));
