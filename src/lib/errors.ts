@@ -8,6 +8,8 @@ export function humanError(e: AnyError): string {
   if (/expired|invalid/i.test(msg) && /token|otp/i.test(msg)) return 'Код қате немесе мерзімі өтті';
   if (code === 'over_sms_send_rate_limit' || /only request this after|rate limit/i.test(msg))
     return 'Тым жиі сұрадыңыз. Бір минуттан соң қайталаңыз.';
+  if (code === 'sms_send_failed' || /sending (confirmation |)otp|sms provider/i.test(msg))
+    return 'SMS жіберу мүмкін болмады. Кейінірек қайталаңыз немесе қолдау қызметіне жазыңыз.';
   if (/network request failed|failed to fetch|fetch failed/i.test(msg)) return 'Интернет байланысын тексеріңіз';
   if (code === 'PGRST202' || /could not find the function/i.test(msg))
     return 'Бұл мүмкіндік серверде әлі қосылмаған (supabase/migrations ішіндегі SQL-ды іске қосыңыз)';
