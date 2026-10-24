@@ -36,7 +36,7 @@ begin
     raise exception 'Күйді % → % ауыстыруға болмайды', v_current, p_status;
   end if;
 
-  update applications set status = p_status where id = p_application_id;
+  update applications set status = p_status::application_status where id = p_application_id;
 end;
 $$;
 
