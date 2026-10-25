@@ -34,9 +34,10 @@ export function humanError(e: AnyError): string {
   const known = SERVER_MESSAGES.find(([re]) => re.test(msg));
   if (known) return t(known[1]);
   if (isUnregistered(e)) return t('err.unregistered');
-  if (code === 'otp_expired' || (/expired|invalid/i.test(msg) && /token|otp/i.test(msg))) return t('err.otp');
-  if (code === 'over_sms_send_rate_limit' || /only request this after|rate limit/i.test(msg)) return t('err.rateLimit');
+  // SMS провайдерінің қатесі бірінші: оның мәтінінде де «OTP» мен «invalid» бар, «код қате» деп шатастырмау үшін
   if (code === 'sms_send_failed' || /sending (confirmation |)otp|sms provider/i.test(msg)) return t('err.sms');
+  if (code === 'over_sms_send_rate_limit' || /only request this after|rate limit/i.test(msg)) return t('err.rateLimit');
+  if (code === 'otp_expired' || (/expired|invalid/i.test(msg) && /token|otp/i.test(msg))) return t('err.otp');
   if (/network request failed|failed to fetch|fetch failed/i.test(msg)) return t('err.network');
   if (code === 'PGRST202' || code === 'PGRST205' || /could not find the (function|table)/i.test(msg)) return t('err.notDeployed');
   if (code === '23505' && /iin/i.test(msg)) return t('err.iinTaken');
