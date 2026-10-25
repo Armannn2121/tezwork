@@ -10,27 +10,49 @@ type SessionState = {
   /** Пайдаланушының ЖСН-і (тек өзіне көрінеді) */
   iin: string | null;
   loading: boolean;
+  /** Профильді желі қатесінен жүктей алмадық */
+  loadError: boolean;
+  retry: () => void;
   refreshProfile: () => Promise<void>;
   saveIin: (iin: string) => Promise<{ error: { message: string; code?: string } | null }>;
   signOut: () => Promise<void>;
 };
 
 const Ctx = createContext<SessionState>({
-  session: null, profile: null, iin: null, loading: true,
+  session: null, profile: null, iin: null, loading: true, loadError: false, retry: () => {},
   refreshProfile: async () => {}, saveIin: async () => ({ error: null }), signOut: async () => {},
 });
 
 export const useSession = () => useContext(Ctx);
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Желі баяу болса сұранысты бірнеше рет қайталаймыз; бәрі сәтсіз болса — қате лақтырамыз.
+// Маңызды: желі қатесін «профиль жоқ» деп ұғуға болмайды, әйтпесе онбординг ашылып кетеді.
+async function withRetry<T>(fn: () => PromiseLike<{ data: T; error: { message: string } | null }>, attempts = 3) {
+  let last: { message: string } | null = null;
+  for (let i = 0; i < attempts; i++) {
+    const { data, error } = await fn();
+    if (!error) return data;
+    last = error;
+    await sleep(600 * (i + 1));
+  }
+  throw new Error(last?.message ?? 'network');
+}
+
 async function fetchProfile(uid: string) {
-  const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+  const data = await withRetry(() => supabase.from('profiles').select('*').eq('id', uid).maybeSingle());
   return (data as Profile) ?? null;
 }
 
-// private_profiles кестесі әлі жоқ болса (миграция жіберілмеген) — null
+// ЖСН жүктелмесе — null (қосымша ЖСН қосуды ұсынады, бірақ профильге әсер етпейді)
 async function fetchIin(uid: string) {
-  const { data } = await supabase.from('private_profiles').select('iin').eq('id', uid).maybeSingle();
-  return (data as { iin: string } | null)?.iin ?? null;
+  try {
+    const data = await withRetry(() => supabase.from('private_profiles').select('iin').eq('id', uid).maybeSingle());
+    return (data as { iin: string } | null)?.iin ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function insertProfile(uid: string, d: RegistrationDraft) {
@@ -74,35 +96,57 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [iin, setIin] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const loadedUid = useRef<string | null | undefined>(undefined);
+  const sessionRef = useRef<Session | null>(null);
+
+  const load = useCallback(async (s: Session | null) => {
+    const uid = s?.user.id ?? null;
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const p = s ? await ensureProfile(s.user) : null;
+      const i = s && p ? await fetchIin(s.user.id) : null;
+      if (loadedUid.current === uid) {
+        setProfile(p);
+        setIin(i);
+      }
+    } catch {
+      // Желі қатесі — профильді «жоқ» деп белгілемей, қайталау экранын көрсетеміз
+      if (loadedUid.current === uid) setLoadError(true);
+    } finally {
+      if (loadedUid.current === uid) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
+      sessionRef.current = s;
       const uid = s?.user.id ?? null;
       // Токен жаңарғанда профильді қайта жүктемейміз — экран жыпылықтамасын
       if (uid === loadedUid.current) return;
       loadedUid.current = uid;
-      setLoading(true);
       // Supabase кеңесі: callback ішінде басқа supabase шақыруларын күтпеу
-      setTimeout(async () => {
-        const p = s ? await ensureProfile(s.user) : null;
-        const i = s && p ? await fetchIin(s.user.id) : null;
-        if (loadedUid.current === uid) {
-          setProfile(p);
-          setIin(i);
-          setLoading(false);
-        }
-      }, 0);
+      setTimeout(() => { load(s); }, 0);
     });
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [load]);
 
+  const retry = useCallback(() => { load(sessionRef.current); }, [load]);
+
+  // Сәтсіз болса бұрынғы профильді сақтаймыз (пайдаланушыны онбордингке лақтырмаймыз)
   const refreshProfile = useCallback(async () => {
     if (!session) return;
-    const p = await fetchProfile(session.user.id);
-    setProfile(p);
-    if (p) setIin(await fetchIin(session.user.id));
+    try {
+      const p = await fetchProfile(session.user.id);
+      if (p) {
+        setProfile(p);
+        setIin(await fetchIin(session.user.id));
+      }
+    } catch {
+      // келесі жолы қайта жүктеледі
+    }
   }, [session]);
 
   const saveIin = useCallback(async (value: string) => {
@@ -117,7 +161,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ session, profile, iin, loading, refreshProfile, saveIin, signOut }}>
+    <Ctx.Provider value={{ session, profile, iin, loading, loadError, retry, refreshProfile, saveIin, signOut }}>
       {children}
     </Ctx.Provider>
   );

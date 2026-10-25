@@ -16,6 +16,7 @@ const SERVER_MESSAGES: [RegExp, TKey][] = [
   [/Бас тарту мүмкін емес/, 'err.cantCancel'],
   [/Тек аяқталған ауысымға/, 'err.onlyCompleted'],
   [/баға беріп қойғансыз/, 'err.alreadyRated'],
+  [/қаражат жеткіліксіз: ауысым/, 'err.insufficientPay'],
   [/қаражат жеткіліксіз/, 'err.insufficient'],
   [/тек жұмыс беруші толтыра/, 'err.onlyBusinessTopup'],
   [/1 000 – 5 000 000/, 'err.amountRange'],

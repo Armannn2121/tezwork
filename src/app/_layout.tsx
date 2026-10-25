@@ -10,11 +10,12 @@ import { FeedbackProvider } from '../lib/feedback';
 import { t } from '../lib/i18n';
 import { SessionProvider, useSession } from '../lib/session';
 import { colors } from '../lib/theme';
+import { EmptyState } from '../lib/ui';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootStack() {
-  const { session, profile, loading } = useSession();
+  const { session, profile, loading, loadError, retry } = useSession();
   const { ready } = useAppSettings();
   const router = useRouter();
   const busy = loading || !ready;
@@ -31,6 +32,19 @@ function RootStack() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
         <ActivityIndicator color={colors.brand} size="large" />
+      </View>
+    );
+  }
+
+  if (session && loadError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 24 }}>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={t('err.loadTitle')}
+          subtitle={t('err.network')}
+          action={{ title: t('common.retry'), onPress: retry }}
+        />
       </View>
     );
   }
