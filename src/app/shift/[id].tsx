@@ -90,6 +90,13 @@ export default function ShiftDetails() {
         </View>
       </Card>
 
+      {!!shift.description && (
+        <Card>
+          <Text style={[text.muted, { fontWeight: '700', marginBottom: 6 }]}>{t('shift.description')}</Text>
+          <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{shift.description}</Text>
+        </Card>
+      )}
+
       {profile?.role === 'business'
         ? <BusinessPanel shift={shift} onChange={update} />
         : <WorkerPanel shift={shift} onChange={update} />}

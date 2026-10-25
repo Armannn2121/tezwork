@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import { Linking, ScrollView, Switch, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MenuGroup, MenuRow } from '../components/menu-row';
+import { RoleSwitchRow } from '../components/role-switch';
 import { ThemeMode, useAppSettings } from '../lib/app-settings';
 import { SUPPORT_EMAIL, SUPPORT_TELEGRAM } from '../lib/config';
 import { humanError } from '../lib/errors';
@@ -79,6 +80,10 @@ export default function Settings() {
           {!!SUPPORT_EMAIL && <MenuRow icon="mail-outline" label={t('settings.writeEmail')} onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)} last />}
         </MenuGroup>
       )}
+
+      <MenuGroup title={t('settings.role')}>
+        <RoleSwitchRow />
+      </MenuGroup>
 
       <MenuGroup title={t('settings.account')}>
         <MenuRow icon="log-out-outline" label={t('settings.logout')} onPress={logout} />

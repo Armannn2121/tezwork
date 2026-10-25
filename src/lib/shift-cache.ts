@@ -27,6 +27,7 @@ export function putApplications(items: MyApplication[]) {
       applied: a.status !== 'cancelled', application_id: a.application_id, application_status: a.status,
       category: a.category ?? cache.get(a.shift_id)?.category, business_phone: a.business_phone,
       company_rating: a.company_rating, company_reviews: a.company_reviews, my_stars: a.my_stars,
+      description: a.description ?? cache.get(a.shift_id)?.description,
     });
   }
 }

@@ -16,6 +16,14 @@ const SERVER_MESSAGES: [RegExp, TKey][] = [
   [/Бас тарту мүмкін емес/, 'err.cantCancel'],
   [/Тек аяқталған ауысымға/, 'err.onlyCompleted'],
   [/баға беріп қойғансыз/, 'err.alreadyRated'],
+  [/қаражат жеткіліксіз/, 'err.insufficient'],
+  [/тек жұмыс беруші толтыра/, 'err.onlyBusinessTopup'],
+  [/1 000 – 5 000 000/, 'err.amountRange'],
+  [/Ең аз шығару/, 'err.minWithdraw'],
+  [/Карта табылмады|Төлем әдісі табылмады/, 'err.methodNotFound'],
+  [/белсенді жазылымдарыңызды/, 'err.activeApplications'],
+  [/белсенді ауысымдарыңызды/, 'err.activeShifts'],
+  [/Компания атауын жазыңыз/, 'form.companyErr'],
 ];
 
 // Supabase қателерін пайдаланушыға түсінікті мәтінге айналдырады

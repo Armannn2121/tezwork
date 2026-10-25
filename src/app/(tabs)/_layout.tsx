@@ -1,12 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import { useSession } from '../../lib/session';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { useFeedback } from '../../lib/feedback';
 import { t } from '../../lib/i18n';
+import { takeRoleNotice, useSession } from '../../lib/session';
 import { colors } from '../../lib/theme';
 
 export default function TabsLayout() {
   const { profile } = useSession();
+  const { confirm } = useFeedback();
+  const router = useRouter();
   const isBiz = profile?.role === 'business';
+
+  // Тіркелуде басқа рөл таңдалса, бірақ нөмір бұрын тіркелген болса — түсіндіреміз
+  useEffect(() => {
+    const role = takeRoleNotice();
+    if (!role) return;
+    confirm({
+      title: t('role.mismatchTitle'),
+      message: t('role.mismatchMsg', { role: t(role === 'business' ? 'role.business' : 'role.worker') }),
+      confirm: t('role.goSettings'),
+      cancel: t('common.close'),
+    }).then((ok) => { if (ok) router.push('/settings'); });
+  }, [confirm, router]);
+
   return (
     <Tabs
       screenOptions={{

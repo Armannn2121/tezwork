@@ -48,10 +48,19 @@ export async function insertProfile(uid: string, d: RegistrationDraft) {
   return { error };
 }
 
+// Тіркелуде басқа рөл таңдалып, бірақ нөмір бұрын тіркелген болса — бір рет ескертеміз
+let roleNotice: Profile['role'] | null = null;
+export const takeRoleNotice = () => { const r = roleNotice; roleNotice = null; return r; };
+
 // Профиль жоқ болса — тіркелу кезінде толтырылған деректерден құрамыз
 async function ensureProfile(user: User): Promise<Profile | null> {
   const existing = await fetchProfile(user.id);
-  if (existing) { setDraft(null); return existing; }
+  if (existing) {
+    const d = getDraft();
+    if (d && d.role !== existing.role) roleNotice = existing.role;
+    setDraft(null);
+    return existing;
+  }
   const d = getDraft() ?? draftFromMetadata(user.user_metadata);
   if (!d) return null;
   const { error } = await insertProfile(user.id, d);

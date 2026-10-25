@@ -5,13 +5,14 @@ import { MenuGroup, MenuRow } from '../../components/menu-row';
 import { RatingBadge } from '../../components/rating';
 import { cityName } from '../../lib/cities';
 import { useFeedback } from '../../lib/feedback';
-import { formatPhone, initials } from '../../lib/format';
+import { formatKzt, formatPhone, initials } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { maskIin } from '../../lib/kz-id';
 import { useSession } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { useFocusQuery } from '../../lib/use-focus-query';
 import { colors, radius, themed } from '../../lib/theme';
+import { WalletSummary } from '../../lib/types';
 import { Badge, text } from '../../lib/ui';
 
 export default function Profile() {
@@ -20,6 +21,7 @@ export default function Profile() {
   const { confirm } = useFeedback();
   const isBiz = profile?.role === 'business';
   const rating = useFocusQuery<{ avg: number | null; reviews: number }[]>('my-rating', () => supabase.rpc('my_rating'));
+  const wallet = useFocusQuery<WalletSummary[]>('my-wallet', () => supabase.rpc('my_wallet'));
 
   async function logout() {
     if (await confirm({ title: t('settings.logout'), message: t('settings.logoutMsg'), confirm: t('settings.logout'), cancel: t('common.cancel') })) {
@@ -55,6 +57,11 @@ export default function Profile() {
         <MenuRow icon="call-outline" label={t('profile.phone')} value={formatPhone(session?.user.phone)} />
         <MenuRow icon="card-outline" label={t('profile.iin')} value={iin ? maskIin(iin) : t('profile.iinMissing')} onPress={iin ? undefined : () => router.push('/profile-edit')} last={!isBiz} />
         {isBiz && <MenuRow icon="add-circle-outline" label={t('profile.newShift')} onPress={() => router.navigate('/create')} last />}
+      </MenuGroup>
+
+      <MenuGroup>
+        <MenuRow icon="wallet-outline" label={t('profile.wallet')} value={wallet.data?.[0] ? formatKzt(wallet.data[0].balance) : undefined} onPress={() => router.push('/wallet')} />
+        <MenuRow icon="card-outline" label={t('profile.payment')} onPress={() => router.push('/payment-methods')} last />
       </MenuGroup>
 
       <MenuGroup>

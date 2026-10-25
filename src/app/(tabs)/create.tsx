@@ -13,7 +13,8 @@ import { useSession } from '../../lib/session';
 import { useIinGate } from '../../lib/use-iin-gate';
 import { getShift } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
-import { categories } from '../../lib/types';
+import { categories, WalletSummary } from '../../lib/types';
+import { useFocusQuery } from '../../lib/use-focus-query';
 import { Button, Chips, colors, Field, SectionTitle, Segmented, text } from '../../lib/ui';
 
 // Қазақстан уақыты: UTC+5
@@ -48,6 +49,9 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
   const [category, setCategory] = useState(src?.category ?? 'retail');
   const [city, setCity] = useState(src?.city ?? profile?.city ?? DEFAULT_CITY);
   const [address, setAddress] = useState(src?.address ?? '');
+  const [description, setDescription] = useState(src?.description ?? '');
+  const wallet = useFocusQuery<WalletSummary[]>('create-wallet', () => supabase.rpc('my_wallet'));
+  const balance = wallet.data?.[0]?.balance;
   const [date, setDate] = useState(tomorrow);
   const [start, setStart] = useState(src ? formatTime(src.starts_at) : '09:00');
   const [end, setEnd] = useState(src ? formatTime(src.ends_at) : '18:00');
@@ -81,6 +85,7 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
       address: address.trim() || null,
       starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(),
       pay_kzt: total, spots,
+      description: description.trim() || null,
     });
     setBusy(false);
     if (error) {
@@ -113,6 +118,15 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
         <SectionTitle>{t('create.secPlace')}</SectionTitle>
         <CityField value={city} onChange={setCity} />
         <Field label={t('create.address')} value={address} onChangeText={setAddress} placeholder={t('create.addressPh')} />
+        <Field
+          label={t('create.description')}
+          value={description}
+          onChangeText={setDescription}
+          placeholder={t('create.descriptionPh')}
+          multiline
+          maxLength={1000}
+          style={{ minHeight: 90, textAlignVertical: 'top' }}
+        />
 
         <SectionTitle>{t('create.secTime')}</SectionTitle>
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.date')}</Text>
@@ -152,6 +166,12 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
               }}
             />
             <Text style={[text.muted, { marginBottom: 6 }]}>{t('create.total', { pay: formatKzt(total * spots) })}</Text>
+            {balance !== undefined && balance < total * spots && (
+              <View style={{ backgroundColor: colors.warnSoft, borderRadius: 12, padding: 12, marginBottom: 8 }}>
+                <Text style={{ color: colors.text, lineHeight: 19 }}>{t('wallet.low', { balance: formatKzt(balance), need: formatKzt(total * spots) })}</Text>
+                <Text style={{ color: colors.brand, fontWeight: '700', marginTop: 6 }} onPress={() => router.push('/wallet')}>{t('wallet.topup')} →</Text>
+              </View>
+            )}
           </>
         )}
 

@@ -59,6 +59,8 @@ function RootStack() {
         <Stack.Screen name="shift/[id]" options={{ ...header, title: t('shift.title') }} />
         <Stack.Screen name="profile-edit" options={{ ...header, title: t('profile.edit'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ ...header, title: t('settings.title') }} />
+        <Stack.Screen name="wallet" options={{ ...header, title: t('wallet.title') }} />
+        <Stack.Screen name="payment-methods" options={{ ...header, title: t('pm.title') }} />
       </Stack.Protected>
       {/* Құжаттар кірмей тұрып та ашылады (тіркелу кезінде) */}
       <Stack.Screen name="legal/[doc]" options={{ ...header, title: '' }} />

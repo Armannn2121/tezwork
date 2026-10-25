@@ -21,7 +21,7 @@ export type OpenShift = {
   id: string; title: string; category: string; city: string; address: string | null;
   starts_at: string; ends_at: string; pay_kzt: number; spots: number; spots_left: number;
   company_name: string | null; applied: boolean;
-  company_rating?: number | null; company_reviews?: number;
+  company_rating?: number | null; company_reviews?: number; description?: string | null;
 };
 
 export type ApplicationStatus = 'confirmed' | 'checked_in' | 'completed' | 'cancelled';
@@ -30,12 +30,12 @@ export type MyApplication = {
   application_id: string; status: ApplicationStatus; shift_id: string; title: string; city: string;
   address: string | null; starts_at: string; ends_at: string; pay_kzt: number; company_name: string | null;
   category?: string; business_phone?: string | null;
-  company_rating?: number | null; company_reviews?: number; my_stars?: number | null;
+  company_rating?: number | null; company_reviews?: number; my_stars?: number | null; description?: string | null;
 };
 
 export type BizShift = {
   id: string; title: string; city: string; address: string | null; starts_at: string; ends_at: string;
-  pay_kzt: number; spots: number; status: string; taken: number; category?: string;
+  pay_kzt: number; spots: number; status: string; taken: number; category?: string; description?: string | null;
 };
 
 export type Applicant = {
@@ -52,8 +52,20 @@ export type ShiftView = {
   status?: string; applied?: boolean;
   application_id?: string; application_status?: ApplicationStatus;
   company_rating?: number | null; company_reviews?: number;
-  business_phone?: string | null; my_stars?: number | null;
+  business_phone?: string | null; my_stars?: number | null; description?: string | null;
 };
+
+export type PaymentMethod = {
+  id: string; kind: 'card' | 'iban'; bank: string; holder: string;
+  card_last4: string | null; card_brand: 'visa' | 'mastercard' | 'other' | null; iban: string | null; created_at: string;
+};
+
+export type WalletTx = {
+  id: string; amount: number; kind: 'topup' | 'withdraw' | 'earning' | 'payment';
+  status: 'pending' | 'completed' | 'failed'; created_at: string; is_test: boolean;
+};
+
+export type WalletSummary = { balance: number; earned: number; spent: number; topped_up: number; withdrawn: number };
 
 const CATEGORY_DEFS: { id: string; icon: IconName }[] = [
   { id: 'retail', icon: 'storefront-outline' },
