@@ -2,10 +2,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { AuthShell } from '../../components/auth-shell';
+import { DemoSmsBanner } from '../../components/demo-sms-banner';
 import { OTP_LENGTH, OtpInput } from '../../components/otp-input';
 import { humanError } from '../../lib/errors';
+import { demoOtpFor } from '../../lib/config';
 import { useFeedback } from '../../lib/feedback';
 import { formatPhone } from '../../lib/format';
+import { haptic } from '../../lib/haptics';
 import { t } from '../../lib/i18n';
 import { getDraft, publicMetadata } from '../../lib/registration';
 import { supabase } from '../../lib/supabase';
@@ -22,6 +25,17 @@ export default function Verify() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [left, setLeft] = useState(RESEND_SEC);
+  // ДЕМО: SMS орнына қосымшаның үстінде шығатын хабарлама
+  const [demoSms, setDemoSms] = useState<string | null>(null);
+  const [demoRound, setDemoRound] = useState(0);
+
+  useEffect(() => {
+    const demo = demoOtpFor(phone);
+    if (!demo) return;
+    // Басқанша немесе код енгізілгенше экранда қалады (демо кезінде көрсетуге ыңғайлы)
+    const show = setTimeout(() => { setDemoSms(demo); haptic.success(); }, 1500);
+    return () => clearTimeout(show);
+  }, [phone, demoRound]);
 
   useEffect(() => {
     if (left <= 0) return;
@@ -41,6 +55,7 @@ export default function Verify() {
 
   function onChange(v: string) {
     setCode(v); setError(null);
+    if (v.length === OTP_LENGTH) setDemoSms(null);
     if (v.length === OTP_LENGTH) verify(v);
   }
 
@@ -53,10 +68,14 @@ export default function Verify() {
       options: mode === 'register' ? { data: draft ? publicMetadata(draft) : undefined } : { shouldCreateUser: false },
     });
     if (e) { setError(humanError(e)); setLeft(0); }
-    else toast(t('verify.resent'), 'info');
+    else {
+      toast(t('verify.resent'), 'info');
+      setDemoRound((n) => n + 1);
+    }
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <AuthShell
       title={t('verify.title')}
       subtitle={t('verify.subtitle', { phone: formatPhone(phone), n: OTP_LENGTH })}
@@ -73,5 +92,7 @@ export default function Verify() {
         <Text style={{ color: colors.muted, fontWeight: '600' }} onPress={() => router.back()}>{t('verify.changePhone')}</Text>
       </View>
     </AuthShell>
+      {demoSms && <DemoSmsBanner code={demoSms} onPress={() => { setDemoSms(null); onChange(demoSms); }} />}
+    </View>
   );
 }

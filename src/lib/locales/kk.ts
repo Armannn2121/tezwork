@@ -405,4 +405,12 @@ export const kk = {
   'err.activeApplications': 'Алдымен белсенді жазылымдарыңызды аяқтаңыз немесе бас тартыңыз',
   'err.activeShifts': 'Алдымен белсенді ауысымдарыңызды жабыңыз',
   'err.loadTitle': 'Деректер жүктелмеді',
+
+  // Демо режимі
+  'demo.smsApp': 'Хабарламалар',
+  'demo.now': 'қазір',
+  'demo.smsText': 'TezWork: кіру коды {code}. Бұл кодты ешкімге айтпаңыз.',
+  'demo.tapToFill': 'Кодты енгізу үшін басыңыз',
+  'demo.numbers': 'Демо нөмірлер',
+  'demo.onlyTest': 'Демо нұсқада тек тест нөмірлері жұмыс істейді. Төмендегі нөмірлердің бірін таңдаңыз.',
 } satisfies Record<string, string>;

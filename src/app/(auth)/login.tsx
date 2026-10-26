@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { AuthShell } from '../../components/auth-shell';
+import { DemoPhonePicker } from '../../components/demo-sms-banner';
 import { PhoneField } from '../../components/phone-field';
 import { humanError, isUnregistered } from '../../lib/errors';
 import { normalizePhone } from '../../lib/format';
@@ -48,6 +49,7 @@ export default function Login() {
       }
     >
       <PhoneField digits={digits} onChange={(d) => { setDigits(d); setError(null); }} error={error} onSubmit={sendCode} />
+      <DemoPhonePicker onPick={(d) => { setDigits(d); setError(null); setNotFound(false); }} highlight={!!error && !notFound} />
       {notFound && (
         <Button title={t('login.registerWithPhone')} variant="secondary" icon="person-add-outline" onPress={() => router.replace('/register')} />
       )}

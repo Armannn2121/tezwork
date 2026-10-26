@@ -386,4 +386,12 @@ export const ru: Record<keyof typeof kk, string> = {
   'err.activeApplications': 'Сначала завершите или отмените активные записи',
   'err.activeShifts': 'Сначала закройте активные смены',
   'err.loadTitle': 'Не удалось загрузить данные',
+
+  // Демо режимі
+  'demo.smsApp': 'Сообщения',
+  'demo.now': 'сейчас',
+  'demo.smsText': 'TezWork: код входа {code}. Никому не сообщайте этот код.',
+  'demo.tapToFill': 'Нажмите, чтобы ввести код',
+  'demo.numbers': 'Демо-номера',
+  'demo.onlyTest': 'В демо-версии работают только тестовые номера. Выберите один из номеров ниже.',
 };

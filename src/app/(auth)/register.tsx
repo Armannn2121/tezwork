@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { AuthShell } from '../../components/auth-shell';
+import { DemoPhonePicker } from '../../components/demo-sms-banner';
 import { ConsentCheckbox } from '../../components/consent';
 import { PhoneField } from '../../components/phone-field';
 import { ProfileFields, RolePicker } from '../../components/profile-form';
@@ -80,6 +81,8 @@ export default function Register() {
       {step === 2 && (
         <View>
           <PhoneField digits={digits} onChange={(d) => { setDigits(d); setPhoneError(null); }} error={phoneError} onSubmit={sendCode} />
+          <DemoPhonePicker onPick={(d) => { setDigits(d); setPhoneError(null); }} highlight={!!phoneError} />
+          <View style={{ height: 12 }} />
           <ConsentCheckbox value={agreed} onChange={(v) => { setAgreed(v); setConsentError(false); }} error={consentError} />
         </View>
       )}
