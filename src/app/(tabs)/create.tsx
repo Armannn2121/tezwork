@@ -6,7 +6,7 @@ import { DayPicker, Stepper, TimePicker } from '../../components/pickers';
 import { ShiftCard } from '../../components/shift-card';
 import { humanError, isIinMissing } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
-import { formatHours, formatKzt, formatTime, hoursBetween, upcomingDays } from '../../lib/format';
+import { dayOffset, formatHours, formatKzt, formatTime, hoursBetween, upcomingDays } from '../../lib/format';
 import { DEFAULT_CITY } from '../../lib/cities';
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
@@ -136,7 +136,7 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.end')}</Text>
         <TimePicker value={end} onChange={(v) => { setEnd(v); setErrors({ ...errors, time: undefined }); }} />
         <Text style={[text.muted, { marginBottom: 14, color: errors.time ? colors.danger : colors.muted }]}>
-          {errors.time ?? `${t('create.duration', { d: formatHours(hours) })}${endsAt.getDate() !== startsAt.getDate() ? ` ${t('time.nextDay')}` : ''}`}
+          {errors.time ?? `${t('create.duration', { d: formatHours(hours) })}${dayOffset(endsAt.toISOString(), startsAt) > 0 ? ` ${t('time.nextDay')}` : ''}`}
         </Text>
 
         <SectionTitle>{t('create.secPay')}</SectionTitle>

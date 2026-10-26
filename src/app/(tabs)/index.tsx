@@ -11,10 +11,10 @@ import { dayOffset, firstName, formatKzt, hourlyRate, shiftWhen, ts } from '../.
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
 import { scheduleShiftReminder } from '../../lib/reminders';
-import { patchShift, putBizShifts, putOpenShifts } from '../../lib/shift-cache';
+import { patchShift, putApplications, putBizShifts, putOpenShifts } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, themed } from '../../lib/theme';
-import { BizShift, categories, OpenShift } from '../../lib/types';
+import { BizShift, categories, MyApplication, OpenShift } from '../../lib/types';
 import { Badge, Button, CardSkeletons, Chips, EmptyState, ErrorBanner, Segmented, Stat, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
 import { useIinGate } from '../../lib/use-iin-gate';
@@ -85,6 +85,8 @@ function WorkerFeed() {
     q.setData((d) => (d ?? []).map((x) => (x.id === s.id ? { ...x, applied: true, spots_left: x.spots_left - 1 } : x)));
     patchShift(s.id, { applied: true, spots_left: s.spots_left - 1 });
     scheduleShiftReminder(s);
+    // Толық бетте «Бас тарту» мен байланыс нөмірі шығуы үшін жазылым деректерін кэшке саламыз
+    supabase.rpc('my_applications').then(({ data }) => { if (data) putApplications(data as MyApplication[]); });
     toast(t('feed.appliedToast'), 'success');
     q.reload();
   }

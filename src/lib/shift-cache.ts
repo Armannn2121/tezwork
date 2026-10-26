@@ -10,12 +10,13 @@ export function patchShift(id: string, patch: Partial<ShiftView>) {
   if (cur) cache.set(id, { ...cur, ...patch });
 }
 
+// Жаңа деректі бұрынғысымен біріктіреміз: басқа тізімнен келген өрістер (мыс. жазылым id-сі) өшпеуі керек
 export function putOpenShifts(items: OpenShift[]) {
-  for (const s of items) cache.set(s.id, { ...s });
+  for (const s of items) cache.set(s.id, { ...cache.get(s.id), ...s });
 }
 
 export function putBizShifts(items: BizShift[]) {
-  for (const s of items) cache.set(s.id, { ...s });
+  for (const s of items) cache.set(s.id, { ...cache.get(s.id), ...s });
 }
 
 export function putApplications(items: MyApplication[]) {

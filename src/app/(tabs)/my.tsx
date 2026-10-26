@@ -125,7 +125,10 @@ export default function MyApplications() {
         applicationId={rateFor?.application_id ?? null}
         title={rateFor?.company_name ?? rateFor?.title ?? ''}
         onClose={() => setRateFor(null)}
-        onDone={(n) => q.setData((list) => (list ?? []).map((x) => (x.application_id === rateFor?.application_id ? { ...x, my_stars: n } : x)))}
+        onDone={(n) => {
+          q.setData((list) => (list ?? []).map((x) => (x.application_id === rateFor?.application_id ? { ...x, my_stars: n } : x)));
+          q.reload(); // компанияның жаңа рейтингі үшін
+        }}
       />
     </>
   );

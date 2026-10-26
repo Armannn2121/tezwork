@@ -4,31 +4,35 @@ const p2 = (n: number) => String(n).padStart(2, '0');
 const DAY_MS = 24 * 3600 * 1000;
 const weekdays = () => t('time.weekdays').split(',');
 
+// Ауысымдар Қазақстанда өтеді, сондықтан уақыт құрылғының белдеуіне қарамай әрқашан
+// Қазақстан уақытымен (UTC+5, 2024 жылдан бері бүкіл ел бойынша) көрсетіледі.
+// kz() қайтарған Date-тен тек getUTC* әдістерімен оқимыз.
+export const KZ_OFFSET_MS = 5 * 3600 * 1000;
+const kz = (d: string | number | Date) => new Date(new Date(d).getTime() + KZ_OFFSET_MS);
+const kzDay = (d: string | number | Date) => Math.floor(kz(d).getTime() / DAY_MS);
+
 export const ts = (iso: string) => new Date(iso).getTime();
 
 export const formatKzt = (n: number) =>
   String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₸';
 
 export const formatTime = (iso: string) => {
-  const d = new Date(iso);
-  return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  const d = kz(iso);
+  return `${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}`;
 };
 
 export const formatDate = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-// 0 — бүгін, 1 — ертең, -1 — кеше
-export const dayOffset = (iso: string, now = new Date()) =>
-  Math.round((startOfDay(new Date(iso)).getTime() - startOfDay(now).getTime()) / DAY_MS);
+// 0 — бүгін, 1 — ертең, -1 — кеше (Қазақстан күнтізбесі бойынша)
+export const dayOffset = (iso: string, now = new Date()) => kzDay(iso) - kzDay(now);
 
 export function dayLabel(iso: string) {
   const off = dayOffset(iso);
   if (off === 0) return t('time.today');
   if (off === 1) return t('time.tomorrow');
   if (off === -1) return t('time.yesterday');
-  const d = new Date(iso);
-  return `${weekdays()[d.getDay()]}, ${p2(d.getDate())}.${p2(d.getMonth() + 1)}`;
+  const d = kz(iso);
+  return `${weekdays()[d.getUTCDay()]}, ${p2(d.getUTCDate())}.${p2(d.getUTCMonth() + 1)}`;
 }
 
 export const shiftWhen = (startIso: string, endIso: string) =>
@@ -50,8 +54,8 @@ export const hourlyRate = (pay: number, startIso: string, endIso: string) => {
 };
 
 export function isNightShift(startIso: string, endIso: string) {
-  const s = new Date(startIso).getHours();
-  const e = new Date(endIso).getHours();
+  const s = kz(startIso).getUTCHours();
+  const e = kz(endIso).getUTCHours();
   return s >= 22 || s < 5 || dayOffset(endIso, new Date(startIso)) > 0 || e <= 5;
 }
 
@@ -65,13 +69,14 @@ export function timeUntil(iso: string, now = new Date()) {
   return t('time.inDays', { n: Math.round(h / 24) });
 }
 
-// Келесі n күн: { iso: 'YYYY-MM-DD', label, sub }
+// Келесі n күн (Қазақстан күнтізбесі бойынша): { iso: 'YYYY-MM-DD', label, sub }
 export function upcomingDays(n: number, now = new Date()) {
+  const today = kz(now);
   return Array.from({ length: n }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-    const iso = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
-    const label = i === 0 ? t('time.today') : i === 1 ? t('time.tomorrow') : weekdays()[d.getDay()];
-    return { iso, label, sub: `${p2(d.getDate())}.${p2(d.getMonth() + 1)}` };
+    const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + i));
+    const iso = `${d.getUTCFullYear()}-${p2(d.getUTCMonth() + 1)}-${p2(d.getUTCDate())}`;
+    const label = i === 0 ? t('time.today') : i === 1 ? t('time.tomorrow') : weekdays()[d.getUTCDay()];
+    return { iso, label, sub: `${p2(d.getUTCDate())}.${p2(d.getUTCMonth() + 1)}` };
   });
 }
 

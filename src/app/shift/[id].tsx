@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, Share, Text, View } from 'react-native';
 import { ContactCard, ContactIcons } from '../../components/contact';
 import { RateModal, RatingBadge } from '../../components/rating';
@@ -10,10 +10,11 @@ import { useFeedback } from '../../lib/feedback';
 import { dayLabel, formatHours, formatKzt, formatTime, hourlyRate, hoursBetween, isNightShift, timeUntil, ts } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
-import { getShift, patchShift } from '../../lib/shift-cache';
+import { getShift, patchShift, putApplications } from '../../lib/shift-cache';
+import { loadShift } from '../../lib/shift-loader';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, themed } from '../../lib/theme';
-import { Applicant, ApplicationStatus, categoryOf, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
+import { Applicant, ApplicationStatus, categoryOf, MyApplication, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
 import { Badge, Button, Card, EmptyState, ErrorBanner, IconText, Progress, SectionTitle, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
 import { cancelShiftReminder, scheduleShiftReminder } from '../../lib/reminders';
@@ -25,7 +26,27 @@ export default function ShiftDetails() {
   const router = useRouter();
   const { profile } = useSession();
   const [shift, setShift] = useState<ShiftView | undefined>(() => getShift(id));
+  const [loaded, setLoaded] = useState(false);
   const now = useNow();
+
+  // Кэштегіні бірден көрсетеміз, ал серверден жаңасын әрқашан жүктейміз
+  // (бетті жаңартқанда немесе сілтемемен ашқанда кэш бос болады)
+  useEffect(() => {
+    let alive = true;
+    loadShift(id, profile?.role)
+      .then((fresh) => { if (alive && fresh) setShift((prev) => ({ ...prev, ...fresh })); })
+      .catch(() => {})
+      .finally(() => { if (alive) setLoaded(true); });
+    return () => { alive = false; };
+  }, [id, profile?.role]);
+
+  if (!shift && !loaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.brand} />
+      </View>
+    );
+  }
 
   if (!shift) {
     return (
@@ -127,6 +148,13 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
     }
     onChange({ applied: true, application_status: 'confirmed', spots_left: (shift.spots_left ?? 1) - 1 });
     scheduleShiftReminder(shift);
+    // Жазылым id-сі мен жұмыс берушінің нөмірі тек my_applications-та бар — бас тарту мен байланыс үшін жүктейміз
+    const { data: apps } = await supabase.rpc('my_applications');
+    if (apps) {
+      putApplications(apps as MyApplication[]);
+      const fresh = getShift(shift.id);
+      if (fresh) onChange({ application_id: fresh.application_id, business_phone: fresh.business_phone });
+    }
     toast(t('shift.applied'), 'success');
   }
 
