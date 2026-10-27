@@ -1,21 +1,57 @@
-The MIT License (MIT)
+TezWork
+Copyright (c) 2026 «210» командасы (METU студенттері). Барлық құқық қорғалған.
+Copyright (c) 2026 Team "210" (METU students). All rights reserved.
 
-Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
+────────────────────────────────────────────────────────────────────────
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+ҚАЗАҚША
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Бұл репозиторийдегі бастапқы код, құжаттар, тест деректері және дизайн
+(бұдан әрі — «Жоба») «210» командасына тиесілі.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Жоба тек қарауға ашық. Рұқсат етіледі:
+  • кодты GitHub-та оқу және қарау;
+  • AI-SANA HACKATHON 2026 қазылары мен ұйымдастырушыларына жобаны бағалау
+    мақсатында жүктеп алу, іске қосу және тексеру.
+
+Командамен жазбаша келісімсіз тыйым салынады:
+  • Жобаны немесе оның бөлігін көшіру, өзгерту, тарату, жариялау;
+  • оны өз жобаңызда, коммерциялық немесе басқа мақсатта пайдалану;
+  • оның негізінде туынды жұмыс жасау.
+
+Репозиторийдің ашық болуы бұл құқықтарды бермейді.
+
+Жобада пайдаланылған үшінші тарап кітапханалары мен қызметтері (Expo, React Native,
+Supabase, Anthropic SDK, Gemini API және басқалары) өз лицензияларымен таратылады —
+README.md, «Технологиялар мен лицензиялар» бөлімі.
+
+Жоба «сол күйінде» беріледі, ешқандай кепілдіксіз.
+
+Рұқсат сұрау үшін: https://github.com/Armannn2121
+
+────────────────────────────────────────────────────────────────────────
+
+ENGLISH
+
+The source code, documentation, test data and design in this repository
+(the "Project") are owned by Team "210".
+
+The Project is made available for viewing only. You may:
+  • read and view the code on GitHub;
+  • if you are a judge or organizer of AI-SANA HACKATHON 2026, download, run
+    and test the Project for the purpose of evaluating it.
+
+Without the team's prior written permission you may not:
+  • copy, modify, distribute or publish the Project or any part of it;
+  • use it in your own project, for commercial or any other purpose;
+  • create derivative works based on it.
+
+Making this repository public does not grant any of these rights.
+
+Third-party libraries and services used by the Project (Expo, React Native,
+Supabase, the Anthropic SDK, the Gemini API, and others) remain under their own terms —
+see README.md, section "Технологиялар мен лицензиялар".
+
+THE PROJECT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+To request permission: https://github.com/Armannn2121
