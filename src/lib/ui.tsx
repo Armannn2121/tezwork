@@ -43,7 +43,7 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary',
   );
 }
 
-export function Field({ label, error, hint, prefix, ...props }: TextInputProps & {
+export function Field({ label, error, hint, prefix, style, ...props }: TextInputProps & {
   label: string; error?: string | null; hint?: string; prefix?: string;
 }) {
   const [focused, setFocused] = useState(false);
@@ -55,7 +55,8 @@ export function Field({ label, error, hint, prefix, ...props }: TextInputProps &
         {prefix && <Text style={s.prefix}>{prefix}</Text>}
         <TextInput
           placeholderTextColor={colors.faint}
-          style={s.input}
+          // Сырттан келген стиль негізгісін алмастырмайды, толықтырады (әйтпесе көпжолды өріс тарылады)
+          style={[s.input, style]}
           onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
           {...props}

@@ -1,9 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { AiAssist } from '../../components/ai-assist';
 import { CityField } from '../../components/city-picker';
 import { DayPicker, Stepper, TimePicker } from '../../components/pickers';
 import { ShiftCard } from '../../components/shift-card';
+import { resolveCity, ShiftDraft } from '../../lib/ai';
 import { humanError, isIinMissing } from '../../lib/errors';
 import { useFeedback } from '../../lib/feedback';
 import { dayOffset, formatHours, formatKzt, formatTime, hoursBetween, upcomingDays } from '../../lib/format';
@@ -60,6 +62,26 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
   const [spots, setSpots] = useState(src?.spots ?? 1);
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
+  // AI толтырғанда уақыт таңдағыштары жаңа мәнге айналып көрінуі үшін қайта құрылады
+  const [aiRound, setAiRound] = useState(0);
+
+  function applyDraft(d: ShiftDraft) {
+    if (d.title) setTitle(d.title);
+    setCategory(d.category);
+    const c = resolveCity(d.city);
+    if (c) setCity(c);
+    if (d.address) setAddress(d.address);
+    if (d.description) setDescription(d.description);
+    if (d.date) setDate(d.date);
+    if (d.start) setStart(d.start);
+    if (d.end) setEnd(d.end);
+    setPayMode(d.pay_mode);
+    if (d.pay > 0) setPay(String(d.pay));
+    setSpots(d.spots);
+    setErrors({});
+    setAiRound((n) => n + 1);
+    toast(t('ai.done'), 'success');
+  }
 
   const { startsAt, endsAt } = toRange(date, start, end);
   const hours = hoursBetween(startsAt.toISOString(), endsAt.toISOString());
@@ -105,10 +127,12 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
         contentContainerStyle={{ padding: 16, paddingBottom: 40, maxWidth: 720, width: '100%', alignSelf: 'center' }}
         keyboardShouldPersistTaps="handled"
       >
-        {src && (
+        {src ? (
           <View style={{ backgroundColor: colors.infoSoft, borderRadius: 12, padding: 12, marginBottom: 14 }}>
             <Text style={{ color: colors.info, fontWeight: '600' }}>{t('create.copied')}</Text>
           </View>
+        ) : (
+          <AiAssist onDraft={applyDraft} />
         )}
 
         <SectionTitle>{t('create.secJob')}</SectionTitle>
@@ -130,11 +154,11 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
 
         <SectionTitle>{t('create.secTime')}</SectionTitle>
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.date')}</Text>
-        <DayPicker value={date} onChange={(d) => { setDate(d); setErrors({ ...errors, time: undefined }); }} />
+        <DayPicker key={`day-${aiRound}`} value={date} onChange={(d) => { setDate(d); setErrors({ ...errors, time: undefined }); }} />
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.start')}</Text>
-        <TimePicker value={start} onChange={(v) => { setStart(v); setErrors({ ...errors, time: undefined }); }} />
+        <TimePicker key={`start-${aiRound}`} value={start} onChange={(v) => { setStart(v); setErrors({ ...errors, time: undefined }); }} />
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>{t('create.end')}</Text>
-        <TimePicker value={end} onChange={(v) => { setEnd(v); setErrors({ ...errors, time: undefined }); }} />
+        <TimePicker key={`end-${aiRound}`} value={end} onChange={(v) => { setEnd(v); setErrors({ ...errors, time: undefined }); }} />
         <Text style={[text.muted, { marginBottom: 14, color: errors.time ? colors.danger : colors.muted }]}>
           {errors.time ?? `${t('create.duration', { d: formatHours(hours) })}${dayOffset(endsAt.toISOString(), startsAt) > 0 ? ` ${t('time.nextDay')}` : ''}`}
         </Text>

@@ -1,0 +1,1339 @@
+[
+  {
+    "id": "kk01",
+    "lang": "kk",
+    "ms": 5669,
+    "draft": {
+      "title": "Жүк тиеуші",
+      "category": "warehouse",
+      "city": "Алматы",
+      "address": "Абай даңғылы 10",
+      "date": "2026-10-28",
+      "start": "09:00",
+      "end": "18:00",
+      "pay_mode": "shift",
+      "pay": 15000,
+      "spots": 2,
+      "description": "Жұмыс киімі беріледі.",
+      "missing": []
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk02",
+    "lang": "kk",
+    "ms": 5576,
+    "draft": {
+      "title": "Даяшы",
+      "category": "horeca",
+      "city": "Астана",
+      "address": "Mega Silk Way",
+      "date": "2026-10-27",
+      "start": "18:00",
+      "end": "23:00",
+      "pay_mode": "hour",
+      "pay": 2500,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk03",
+    "lang": "kk",
+    "ms": 4609,
+    "draft": {
+      "title": "Хостес",
+      "category": "events",
+      "city": "Шымкент",
+      "address": "",
+      "date": "2026-10-31",
+      "start": "10:00",
+      "end": "16:00",
+      "pay_mode": "shift",
+      "pay": 12000,
+      "spots": 5,
+      "description": "Жасы 18-ден жоғары.",
+      "missing": [
+        "address"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk04",
+    "lang": "kk",
+    "ms": 4923,
+    "draft": {
+      "title": "Кассир",
+      "category": "cashier",
+      "city": "Қарағанды",
+      "address": "",
+      "date": "2026-10-29",
+      "start": "08:00",
+      "end": "20:00",
+      "pay_mode": "shift",
+      "pay": 14000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk05",
+    "lang": "kk",
+    "ms": 5593,
+    "draft": {
+      "title": "Тапсырыс жинаушы",
+      "category": "warehouse",
+      "city": "Алматы",
+      "address": "Рысқұлов 57",
+      "date": "2026-10-30",
+      "start": "22:00",
+      "end": "06:00",
+      "pay_mode": "shift",
+      "pay": 18000,
+      "spots": 3,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk06",
+    "lang": "kk",
+    "ms": 6435,
+    "draft": {
+      "title": "Тазалықшы",
+      "category": "cleaning",
+      "city": "Астана",
+      "address": "Қабанбай батыр 11",
+      "date": "2026-10-28",
+      "start": "09:00",
+      "end": "13:00",
+      "pay_mode": "shift",
+      "pay": 6000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk07",
+    "lang": "kk",
+    "ms": 4630,
+    "draft": {
+      "title": "Курьер",
+      "category": "courier",
+      "city": "Алматы",
+      "address": "",
+      "date": "2026-10-27",
+      "start": "12:00",
+      "end": "20:00",
+      "pay_mode": "hour",
+      "pay": 2000,
+      "spots": 1,
+      "description": "Өз велосипеді болуы керек.",
+      "missing": [
+        "address"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk08",
+    "lang": "kk",
+    "ms": 7918,
+    "draft": {
+      "title": "Мерчендайзер",
+      "category": "retail",
+      "city": "Ақтөбеде",
+      "address": "",
+      "date": "2026-11-01",
+      "start": "09:00",
+      "end": "18:00",
+      "pay_mode": "shift",
+      "pay": 13000,
+      "spots": 4,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk09",
+    "lang": "kk",
+    "ms": 6255,
+    "draft": {
+      "title": "Ыдыс жуушы",
+      "category": "horeca",
+      "city": "Шымкент",
+      "address": "Тәуке хан 35",
+      "date": "2026-11-02",
+      "start": "10:00",
+      "end": "22:00",
+      "pay_mode": "shift",
+      "pay": 11000,
+      "spots": 1,
+      "description": "Тамақ тегін.",
+      "missing": []
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk10",
+    "lang": "kk",
+    "ms": 6236,
+    "draft": {
+      "title": "Жиһаз тасушы",
+      "category": "warehouse",
+      "city": "Павлодар",
+      "address": "",
+      "date": "2026-10-28",
+      "start": "10:00",
+      "end": "14:00",
+      "pay_mode": "shift",
+      "pay": 8000,
+      "spots": 2,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk11",
+    "lang": "kk",
+    "ms": 5186,
+    "draft": {
+      "title": "Промоутер",
+      "category": "retail",
+      "city": "Алматы",
+      "address": "Dostyk Plaza",
+      "date": "2026-10-27",
+      "start": "14:00",
+      "end": "20:00",
+      "pay_mode": "hour",
+      "pay": 1800,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk12",
+    "lang": "kk",
+    "ms": 7644,
+    "draft": {
+      "title": "Даяшы",
+      "category": "horeca",
+      "city": "Өскемен",
+      "address": "",
+      "date": "2026-10-29",
+      "start": "17:00",
+      "end": "00:00",
+      "pay_mode": "shift",
+      "pay": 10000,
+      "spots": 6,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk13",
+    "lang": "kk",
+    "ms": 3370,
+    "draft": {
+      "title": "Орауыш",
+      "category": "warehouse",
+      "city": "Астана",
+      "address": "",
+      "date": "2026-10-28",
+      "start": "08:00",
+      "end": "17:00",
+      "pay_mode": "shift",
+      "pay": 12500,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk14",
+    "lang": "kk",
+    "ms": 7282,
+    "draft": {
+      "title": "Бариста",
+      "category": "horeca",
+      "city": "Алматы",
+      "address": "Әуезов 84",
+      "date": "2026-10-28",
+      "start": "07:30",
+      "end": "15:30",
+      "pay_mode": "shift",
+      "pay": 9000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk15",
+    "lang": "kk",
+    "ms": 7130,
+    "draft": {
+      "title": "Күзетші",
+      "category": "events",
+      "city": "Қостанай",
+      "address": "",
+      "date": "2026-10-30",
+      "start": "17:00",
+      "end": "23:00",
+      "pay_mode": "shift",
+      "pay": 9000,
+      "spots": 10,
+      "description": "Концертке күзетшілер қажет.",
+      "missing": [
+        "address"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk16",
+    "lang": "kk",
+    "ms": 5159,
+    "draft": {
+      "title": "Пәтер жинау",
+      "category": "cleaning",
+      "city": "Атырау",
+      "address": "",
+      "date": "2026-10-27",
+      "start": "10:00",
+      "end": "15:00",
+      "pay_mode": "shift",
+      "pay": 15000,
+      "spots": 1,
+      "description": "3 бөлмелі пәтер жинау.",
+      "missing": [
+        "address"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk17",
+    "lang": "kk",
+    "ms": 5403,
+    "draft": {
+      "title": "Наубайханаға көмекші",
+      "category": "horeca",
+      "city": "Тараз",
+      "address": "",
+      "date": "2026-10-28",
+      "start": "06:00",
+      "end": "14:00",
+      "pay_mode": "shift",
+      "pay": 10000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk18",
+    "lang": "kk",
+    "ms": 6292,
+    "draft": {
+      "title": "Аниматор",
+      "category": "events",
+      "city": "Алматы",
+      "address": "",
+      "date": "2026-10-31",
+      "start": "12:00",
+      "end": "15:00",
+      "pay_mode": "shift",
+      "pay": 15000,
+      "spots": 1,
+      "description": "Балалар кешіне аниматор қажет.",
+      "missing": [
+        "address"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk19",
+    "lang": "kk",
+    "ms": 7757,
+    "draft": {
+      "title": "Сатушы-кеңесші",
+      "category": "retail",
+      "city": "Семей",
+      "address": "",
+      "date": "2026-10-29",
+      "start": "10:00",
+      "end": "19:00",
+      "pay_mode": "shift",
+      "pay": 11000,
+      "spots": 2,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.6-flash",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "kk20",
+    "lang": "kk",
+    "ms": 3171,
+    "draft": {
+      "title": "Жеткізу курьері",
+      "category": "courier",
+      "city": "Астана",
+      "address": "",
+      "date": "2026-10-27",
+      "start": "18:00",
+      "end": "22:00",
+      "pay_mode": "hour",
+      "pay": 2200,
+      "spots": 3,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru01",
+    "lang": "ru",
+    "ms": 3687,
+    "draft": {
+      "title": "Грузчик",
+      "category": "warehouse",
+      "city": "Алматы",
+      "address": "проспект Абая 10",
+      "date": "2026-10-28",
+      "start": "09:00",
+      "end": "18:00",
+      "pay_mode": "shift",
+      "pay": 15000,
+      "spots": 2,
+      "description": "Спецодежда выдаётся.",
+      "missing": []
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru02",
+    "lang": "ru",
+    "ms": 3277,
+    "draft": {
+      "title": "Официант",
+      "category": "horeca",
+      "city": "Астана",
+      "address": "ТРЦ Хан Шатыр",
+      "date": "2026-10-27",
+      "start": "18:00",
+      "end": "23:00",
+      "pay_mode": "hour",
+      "pay": 2500,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru03",
+    "lang": "ru",
+    "ms": 1622,
+    "draft": {
+      "title": "Хостес",
+      "category": "events",
+      "city": "Шымкент",
+      "address": "",
+      "date": "2026-10-31",
+      "start": "10:00",
+      "end": "16:00",
+      "pay_mode": "shift",
+      "pay": 12000,
+      "spots": 5,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru04",
+    "lang": "ru",
+    "ms": 2316,
+    "draft": {
+      "title": "Кассир",
+      "category": "cashier",
+      "city": "Караганда",
+      "address": "",
+      "date": "2026-10-29",
+      "start": "08:00",
+      "end": "20:00",
+      "pay_mode": "shift",
+      "pay": 14000,
+      "spots": 1,
+      "description": "Супермаркет.",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru05",
+    "lang": "ru",
+    "ms": 4047,
+    "draft": {
+      "title": "Сборщик заказов",
+      "category": "warehouse",
+      "city": "Алматы",
+      "address": "Рыскулова 57",
+      "date": "2026-10-30",
+      "start": "22:00",
+      "end": "06:00",
+      "pay_mode": "shift",
+      "pay": 18000,
+      "spots": 3,
+      "description": "Ночная смена.",
+      "missing": []
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru06",
+    "lang": "ru",
+    "ms": 1711,
+    "draft": {
+      "title": "Уборщица",
+      "category": "cleaning",
+      "city": "Астана",
+      "address": "Кабанбай батыра 11",
+      "date": "2026-10-28",
+      "start": "09:00",
+      "end": "13:00",
+      "pay_mode": "shift",
+      "pay": 6000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru07",
+    "lang": "ru",
+    "ms": 1768,
+    "draft": {
+      "title": "Курьер",
+      "category": "courier",
+      "city": "Алматы",
+      "address": "",
+      "date": "2026-10-27",
+      "start": "12:00",
+      "end": "20:00",
+      "pay_mode": "hour",
+      "pay": 2000,
+      "spots": 1,
+      "description": "Нужен свой велосипед.",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru08",
+    "lang": "ru",
+    "ms": 1842,
+    "draft": {
+      "title": "Мерчендайзер",
+      "category": "retail",
+      "city": "Актобе",
+      "address": "гипермаркет",
+      "date": "2026-11-01",
+      "start": "09:00",
+      "end": "18:00",
+      "pay_mode": "shift",
+      "pay": 13000,
+      "spots": 4,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru09",
+    "lang": "ru",
+    "ms": 2662,
+    "draft": {
+      "title": "Посудомойщица",
+      "category": "horeca",
+      "city": "Шымкент",
+      "address": "Тауке хана 35",
+      "date": "2026-11-02",
+      "start": "10:00",
+      "end": "22:00",
+      "pay_mode": "shift",
+      "pay": 11000,
+      "spots": 1,
+      "description": "Питание бесплатно.",
+      "missing": []
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru10",
+    "lang": "ru",
+    "ms": 2765,
+    "draft": {
+      "title": "Мебель тасушы",
+      "category": "warehouse",
+      "city": "Павлодар",
+      "address": "",
+      "date": "2026-10-28",
+      "start": "10:00",
+      "end": "14:00",
+      "pay_mode": "shift",
+      "pay": 8000,
+      "spots": 2,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru11",
+    "lang": "ru",
+    "ms": 1455,
+    "draft": {
+      "title": "Промоутер",
+      "category": "retail",
+      "city": "Алматы",
+      "address": "Dostyk Plaza",
+      "date": "2026-10-27",
+      "start": "14:00",
+      "end": "20:00",
+      "pay_mode": "hour",
+      "pay": 1800,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru12",
+    "lang": "ru",
+    "ms": 1823,
+    "draft": {
+      "title": "Официант",
+      "category": "horeca",
+      "city": "Усть-Каменогорск",
+      "address": "",
+      "date": "2026-10-29",
+      "start": "17:00",
+      "end": "00:00",
+      "pay_mode": "shift",
+      "pay": 10000,
+      "spots": 6,
+      "description": "Требуются официанты на свадьбу.",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru13",
+    "lang": "ru",
+    "ms": 3677,
+    "draft": {
+      "title": "Упаковщик",
+      "category": "warehouse",
+      "city": "Астана",
+      "address": "",
+      "date": "2026-10-28",
+      "start": "08:00",
+      "end": "17:00",
+      "pay_mode": "shift",
+      "pay": 12500,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru14",
+    "lang": "ru",
+    "ms": 4876,
+    "draft": {
+      "title": "Бариста",
+      "category": "horeca",
+      "city": "Алматы",
+      "address": "Ауэзова 84",
+      "date": "2026-10-28",
+      "start": "07:30",
+      "end": "15:30",
+      "pay_mode": "shift",
+      "pay": 9000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "address": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru15",
+    "lang": "ru",
+    "ms": 4110,
+    "draft": {
+      "title": "Охранник",
+      "category": "events",
+      "city": "Костанай",
+      "address": "",
+      "date": "2026-10-30",
+      "start": "17:00",
+      "end": "23:00",
+      "pay_mode": "shift",
+      "pay": 9000,
+      "spots": 10,
+      "description": "Требуются охранники на концерт.",
+      "missing": [
+        "address"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru16",
+    "lang": "ru",
+    "ms": 3369,
+    "draft": {
+      "title": "Уборка квартиры",
+      "category": "cleaning",
+      "city": "Атырау",
+      "address": "",
+      "date": "2026-10-27",
+      "start": "10:00",
+      "end": "15:00",
+      "pay_mode": "shift",
+      "pay": 15000,
+      "spots": 1,
+      "description": "Уборка 3-комнатной квартиры.",
+      "missing": [
+        "address"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru17",
+    "lang": "ru",
+    "ms": 3300,
+    "draft": {
+      "title": "Помощник в пекарню",
+      "category": "horeca",
+      "city": "Тараз",
+      "address": "",
+      "date": "2026-10-28",
+      "start": "06:00",
+      "end": "14:00",
+      "pay_mode": "shift",
+      "pay": 10000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru18",
+    "lang": "ru",
+    "ms": 3761,
+    "draft": {
+      "title": "Аниматор",
+      "category": "events",
+      "city": "Алматы",
+      "address": "",
+      "date": "2026-10-31",
+      "start": "12:00",
+      "end": "15:00",
+      "pay_mode": "shift",
+      "pay": 15000,
+      "spots": 1,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru19",
+    "lang": "ru",
+    "ms": 1748,
+    "draft": {
+      "title": "Продавец-консультант",
+      "category": "retail",
+      "city": "Семей",
+      "address": "",
+      "date": "2026-10-29",
+      "start": "10:00",
+      "end": "19:00",
+      "pay_mode": "shift",
+      "pay": 11000,
+      "spots": 2,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  },
+  {
+    "id": "ru20",
+    "lang": "ru",
+    "ms": 2166,
+    "draft": {
+      "title": "Курьер",
+      "category": "courier",
+      "city": "Астана",
+      "address": "",
+      "date": "2026-10-27",
+      "start": "18:00",
+      "end": "22:00",
+      "pay_mode": "hour",
+      "pay": 2200,
+      "spots": 3,
+      "description": "",
+      "missing": [
+        "address",
+        "description"
+      ]
+    },
+    "model": "gemini-3.5-flash-lite",
+    "grades": {
+      "title": true,
+      "category": true,
+      "city": true,
+      "date": true,
+      "start": true,
+      "end": true,
+      "pay_mode": true,
+      "pay": true,
+      "spots": true
+    }
+  }
+]
