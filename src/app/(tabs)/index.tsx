@@ -11,10 +11,11 @@ import { dayOffset, firstName, formatKzt, hourlyRate, shiftWhen, ts } from '../.
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
 import { scheduleShiftReminder } from '../../lib/reminders';
-import { patchShift, putApplications, putBizShifts, putOpenShifts } from '../../lib/shift-cache';
+import { patchShift, putBizShifts, putOpenShifts } from '../../lib/shift-cache';
+import { loadShift } from '../../lib/shift-loader';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, themed } from '../../lib/theme';
-import { BizShift, categories, MyApplication, OpenShift } from '../../lib/types';
+import { BizShift, categories, OpenShift } from '../../lib/types';
 import { Badge, Button, CardSkeletons, Chips, EmptyState, ErrorBanner, Segmented, Stat, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
 import { useIinGate } from '../../lib/use-iin-gate';
@@ -83,21 +84,21 @@ function WorkerFeed() {
     }
     // Тізімді күтпей-ақ жаңартамыз
     q.setData((d) => (d ?? []).map((x) => (x.id === s.id ? { ...x, applied: true, spots_left: x.spots_left - 1 } : x)));
-    patchShift(s.id, { applied: true, spots_left: s.spots_left - 1 });
+    patchShift(s.id, { applied: true, application_status: 'confirmed', spots_left: s.spots_left - 1 });
     scheduleShiftReminder(s);
-    // Толық бетте «Бас тарту» мен байланыс нөмірі шығуы үшін жазылым деректерін кэшке саламыз
-    supabase.rpc('my_applications').then(({ data }) => { if (data) putApplications(data as MyApplication[]); });
     toast(t('feed.appliedToast'), 'success');
-    q.reload();
+    // Толық бетте «Бас тарту» мен байланыс нөмірі шығуы үшін жазылым деректерін фонда кэшке саламыз
+    loadShift(s.id, 'worker').catch(() => {});
   }
 
-  const filtered = category !== ALL || day !== 'all' || !!query || city !== (profile?.city ?? ALL_CITIES);
+  // Тазалау барлық қаланы ашады — сондықтан өз қаласында бос болса да батырма шығады, тазалағаннан кейін жасырылады
+  const filtered = category !== ALL || day !== 'all' || !!query || city !== ALL_CITIES;
 
   const header = (
     <View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={[text.muted, { fontSize: 15 }]}>{t('feed.hello', { name: firstName(profile?.full_name) })}</Text>
-        <Pressable onPress={() => setCityOpen(true)} style={s.cityPill}>
+        <Pressable accessibilityRole="button" onPress={() => setCityOpen(true)} style={s.cityPill}>
           <Ionicons name="location" size={14} color={colors.brand} />
           <Text style={s.cityText} numberOfLines={1}>{city ? cityName(city) : t('common.allCities')}</Text>
           <Ionicons name="chevron-down" size={14} color={colors.muted} />
@@ -127,7 +128,7 @@ function WorkerFeed() {
       <Chips scroll options={[{ id: ALL, label: t('common.all') }, ...categories()]} value={category} onChange={setCategory} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <Text style={text.muted}>{q.loading ? t('common.loading') : t('feed.found', { n: items.length })}</Text>
-        <Text style={{ color: colors.brand, fontWeight: '700', fontSize: 13 }} onPress={() => setSort(sort === 'soon' ? 'rate' : 'soon')}>
+        <Text accessibilityRole="button" style={{ color: colors.brand, fontWeight: '700', fontSize: 13 }} onPress={() => setSort(sort === 'soon' ? 'rate' : 'soon')}>
           {sort === 'soon' ? t('feed.sortSoon') : t('feed.sortRate')}
         </Text>
       </View>

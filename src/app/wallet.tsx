@@ -27,10 +27,10 @@ export default function Wallet() {
   const isBiz = profile?.role === 'business';
   const [action, setAction] = useState<Action | null>(null);
 
-  const summary = useFocusQuery<WalletSummary[]>('wallet-summary', () => supabase.rpc('my_wallet'));
+  const summary = useFocusQuery<WalletSummary[]>('my-wallet', () => supabase.rpc('my_wallet'));
   const txs = useFocusQuery<WalletTx[]>('wallet-tx', () =>
     supabase.from('wallet_tx').select('id, amount, kind, status, created_at, is_test').order('created_at', { ascending: false }).limit(100));
-  const methods = useFocusQuery<PaymentMethod[]>('wallet-methods', () =>
+  const methods = useFocusQuery<PaymentMethod[]>('payment-methods', () =>
     supabase.from('payment_methods').select('*').order('created_at', { ascending: false }));
 
   const w = summary.data?.[0];
@@ -120,6 +120,8 @@ function AmountModal({ action, methods, balance, onClose, onAddMethod, onDone, o
   async function submit() {
     const n = parseInt(amount, 10) || 0;
     if (n < 1000) return setError(t('wallet.amountErr'));
+    // Серверге бармай-ақ тексереміз (сервер де тексереді)
+    if (!isTopup && n > balance) return setError(t('err.insufficient'));
     if (!selected) return;
     setBusy(true);
     const { error: e } = await supabase.rpc(isTopup ? 'wallet_topup' : 'wallet_withdraw', { p_amount: n, p_method_id: selected });

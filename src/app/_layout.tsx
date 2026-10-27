@@ -1,4 +1,4 @@
-import { Href, Stack, useRouter } from 'expo-router';
+import { Href, Stack, usePathname, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { Fragment, useEffect } from 'react';
@@ -18,15 +18,22 @@ function RootStack() {
   const { session, profile, loading, loadError, retry } = useSession();
   const { ready } = useAppSettings();
   const router = useRouter();
+  const pathname = usePathname();
   const busy = loading || !ready;
 
   useEffect(() => {
     if (busy) return;
     SplashScreen.hideAsync().catch(() => {});
-    // Тіл/тақырып ауысқаннан кейін пайдаланушыны сол бетке қайтарамыз
+    // Тіл/тақырып ауысқаннан кейін пайдаланушыны сол бетке қайтарамыз (бір рет — кейін null).
+    // Вебте адрес сол бетте қалады: бетті қайта ашсақ, екі рет қабаттасады — сондықтан астына басты бетті
+    // қоямыз, «Артқа» басты бетке апарады
     const back = takeReturnTo();
-    if (back) setTimeout(() => router.push(back as Href), 0);
-  }, [busy, router]);
+    if (!back) return;
+    setTimeout(() => {
+      if (back === pathname) router.replace('/');
+      router.push(back as Href);
+    }, 0);
+  }, [busy, router, pathname]);
 
   if (busy) {
     return (
@@ -69,7 +76,7 @@ function RootStack() {
         <Stack.Screen name="onboarding" />
       </Stack.Protected>
       <Stack.Protected guard={hasProfile} redirectTo={signedIn ? '/onboarding' : '/welcome'}>
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabs)" options={{ title: 'TezWork' }} />
         <Stack.Screen name="shift/[id]" options={{ ...header, title: t('shift.title') }} />
         <Stack.Screen name="profile-edit" options={{ ...header, title: t('profile.edit'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ ...header, title: t('settings.title') }} />

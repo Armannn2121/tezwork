@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
 import { ContactCard, ContactIcons } from '../../components/contact';
 import { RateModal, RatingBadge } from '../../components/rating';
 import { cityName } from '../../lib/cities';
@@ -10,11 +10,12 @@ import { useFeedback } from '../../lib/feedback';
 import { dayLabel, formatHours, formatKzt, formatTime, hourlyRate, hoursBetween, isNightShift, timeUntil, ts } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
-import { getShift, patchShift, putApplications } from '../../lib/shift-cache';
+import { getShift, patchShift } from '../../lib/shift-cache';
 import { loadShift } from '../../lib/shift-loader';
+import { shareText } from '../../lib/share';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, themed } from '../../lib/theme';
-import { Applicant, ApplicationStatus, categoryOf, MyApplication, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
+import { Applicant, ApplicationStatus, categoryOf, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
 import { Badge, Button, Card, EmptyState, ErrorBanner, IconText, Progress, SectionTitle, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
 import { cancelShiftReminder, scheduleShiftReminder } from '../../lib/reminders';
@@ -25,6 +26,7 @@ export default function ShiftDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { profile } = useSession();
+  const { toast } = useFeedback();
   const [shift, setShift] = useState<ShiftView | undefined>(() => getShift(id));
   const [loaded, setLoaded] = useState(false);
   const now = useNow();
@@ -56,18 +58,22 @@ export default function ShiftDetails() {
     );
   }
 
+  // Функционалды жаңарту: фондағы сұраныс кейін келсе де, арадағы өзгерістер өшпейді
   const update = (patch: Partial<ShiftView>) => {
     patchShift(shift.id, patch);
-    setShift({ ...shift, ...patch });
+    setShift((cur) => (cur ? { ...cur, ...patch } : cur));
   };
 
   const hours = hoursBetween(shift.starts_at, shift.ends_at);
   const cat = categoryOf(shift.category);
   const place = [cityName(shift.city), shift.address].filter(Boolean).join(', ');
 
-  const share = () => Share.share({
-    message: t('shift.shareText', { title: shift.title, when: `${dayLabel(shift.starts_at)} ${formatTime(shift.starts_at)}–${formatTime(shift.ends_at)}`, place, pay: formatKzt(shift.pay_kzt) }),
-  }).catch(() => {});
+  const share = async () => {
+    const message = t('shift.shareText', { title: shift.title, when: `${dayLabel(shift.starts_at)} ${formatTime(shift.starts_at)}–${formatTime(shift.ends_at)}`, place, pay: formatKzt(shift.pay_kzt) });
+    const res = await shareText(message);
+    if (res === 'copied') toast(t('common.copied'), 'success');
+    if (res === 'failed') toast(t('err.unknown'), 'error');
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
@@ -78,6 +84,7 @@ export default function ShiftDetails() {
         {shift.company_reviews !== undefined && <View style={{ marginTop: 4 }}><RatingBadge avg={shift.company_rating} count={shift.company_reviews} /></View>}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
           <Badge label={cat.label} tone="neutral" />
+          {!!shift.status && shift.status !== 'open' && <Badge label={t('biz.closed')} icon="lock-closed" tone="danger" />}
           {isNightShift(shift.starts_at, shift.ends_at) && <Badge label={t('shift.night')} icon="moon" tone="info" />}
           {ts(shift.starts_at) > now && <Badge label={timeUntil(shift.starts_at, new Date(now))} icon="time" tone="brand" />}
         </View>
@@ -148,14 +155,11 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
     }
     onChange({ applied: true, application_status: 'confirmed', spots_left: (shift.spots_left ?? 1) - 1 });
     scheduleShiftReminder(shift);
-    // Жазылым id-сі мен жұмыс берушінің нөмірі тек my_applications-та бар — бас тарту мен байланыс үшін жүктейміз
-    const { data: apps } = await supabase.rpc('my_applications');
-    if (apps) {
-      putApplications(apps as MyApplication[]);
-      const fresh = getShift(shift.id);
-      if (fresh) onChange({ application_id: fresh.application_id, business_phone: fresh.business_phone });
-    }
     toast(t('shift.applied'), 'success');
+    // Жазылым id-сі (бас тарту үшін) мен жұмыс берушінің нөмірін фонда жүктейміз — пайдаланушы күтпейді
+    loadShift(shift.id, 'worker')
+      .then((fresh) => { if (fresh) onChange({ application_id: fresh.application_id, business_phone: fresh.business_phone, spots_left: fresh.spots_left }); })
+      .catch(() => {});
   }
 
   async function cancel() {
@@ -242,6 +246,7 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
     if (error) return toast(humanError(error), 'error');
     onChange({ status: 'cancelled' });
     toast(t('shift.closed'), 'info');
+    q.reload(); // расталған жазылымдар да жабылды
   }
 
   const active = (applicants ?? []).filter((a) => a.status !== 'cancelled');
@@ -275,7 +280,8 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
                   </View>
                 </View>
                 {!!a.worker_phone && <ContactIcons phone={a.worker_phone} />}
-                {next && started && (
+                {/* Жабық ауысымға «Келді» белгіленбейді; бірақ келіп қойғанның жұмысын аяқтап, төлеуге болады */}
+                {next && started && (shift.status === 'open' || a.status === 'checked_in') && (
                   <Button title={next.label()} size="sm" variant="secondary" loading={busyId === a.application_id} onPress={() => setStatus(a, next.to)} style={{ paddingHorizontal: 14, marginTop: 0 }} />
                 )}
                 {a.status === 'completed' && !a.my_stars && (

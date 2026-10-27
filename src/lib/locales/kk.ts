@@ -15,6 +15,7 @@ export const kk = {
   'common.search': 'Іздеу',
   'common.close': 'Жабу',
   'common.share': 'Бөлісу',
+  'common.copied': 'Мәтін көшірілді — енді кез келген чатқа жіберуге болады',
 
   // Уақыт
   'time.today': 'Бүгін',

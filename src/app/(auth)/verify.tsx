@@ -88,8 +88,8 @@ export default function Verify() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         {left > 0
           ? <Text style={text.muted}>{t('verify.resendIn', { time: `0:${String(left).padStart(2, '0')}` })}</Text>
-          : <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={resend}>{t('verify.resend')}</Text>}
-        <Text style={{ color: colors.muted, fontWeight: '600' }} onPress={() => router.back()}>{t('verify.changePhone')}</Text>
+          : <Text accessibilityRole="button" style={{ color: colors.brand, fontWeight: '700' }} onPress={resend}>{t('verify.resend')}</Text>}
+        <Text accessibilityRole="button" style={{ color: colors.muted, fontWeight: '600' }} onPress={() => router.back()}>{t('verify.changePhone')}</Text>
       </View>
     </AuthShell>
       {demoSms && <DemoSmsBanner code={demoSms} onPress={() => { setDemoSms(null); onChange(demoSms); }} />}

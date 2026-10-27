@@ -43,7 +43,7 @@ export default function Login() {
           <Button title={t('login.getCode')} onPress={sendCode} loading={busy} disabled={digits.length < 10} />
           <Text style={[text.muted, { textAlign: 'center', marginTop: 16 }]}>
             {t('login.noAccount')}{' '}
-            <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={() => router.replace('/register')}>{t('welcome.register')}</Text>
+            <Text accessibilityRole="button" style={{ color: colors.brand, fontWeight: '700' }} onPress={() => router.replace('/register')}>{t('welcome.register')}</Text>
           </Text>
         </>
       }

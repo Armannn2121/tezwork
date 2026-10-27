@@ -50,7 +50,7 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
   const [city, setCity] = useState(src?.city ?? profile?.city ?? DEFAULT_CITY);
   const [address, setAddress] = useState(src?.address ?? '');
   const [description, setDescription] = useState(src?.description ?? '');
-  const wallet = useFocusQuery<WalletSummary[]>('create-wallet', () => supabase.rpc('my_wallet'));
+  const wallet = useFocusQuery<WalletSummary[]>('my-wallet', () => supabase.rpc('my_wallet'));
   const balance = wallet.data?.[0]?.balance;
   const [date, setDate] = useState(tomorrow);
   const [start, setStart] = useState(src ? formatTime(src.starts_at) : '09:00');
@@ -169,7 +169,7 @@ function ShiftForm({ from, onDone }: { from?: string; onDone: () => void }) {
             {balance !== undefined && balance < total * spots && (
               <View style={{ backgroundColor: colors.warnSoft, borderRadius: 12, padding: 12, marginBottom: 8 }}>
                 <Text style={{ color: colors.text, lineHeight: 19 }}>{t('wallet.low', { balance: formatKzt(balance), need: formatKzt(total * spots) })}</Text>
-                <Text style={{ color: colors.brand, fontWeight: '700', marginTop: 6 }} onPress={() => router.push('/wallet')}>{t('wallet.topup')} →</Text>
+                <Text accessibilityRole="button" style={{ color: colors.brand, fontWeight: '700', marginTop: 6 }} onPress={() => router.push('/wallet')}>{t('wallet.topup')} →</Text>
               </View>
             )}
           </>

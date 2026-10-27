@@ -44,12 +44,13 @@ export default function PaymentMethods() {
     const row: Record<string, string> = kind === 'card'
       ? { kind, bank: bankName, holder: holder.trim(), card_last4: cardDigits(card).slice(-4), card_brand: cardBrand(card) }
       : { kind, bank: bankName, holder: holder.trim(), iban: normalizeIban(iban) };
-    const { error } = await supabase.from('payment_methods').insert(row);
+    // Қосылған жолды бірден қайтарамыз — тізімді қайта жүктемейміз
+    const { data, error } = await supabase.from('payment_methods').insert(row).select().single();
     setBusy(false);
     if (error) return toast(humanError(error), 'error');
+    q.setData((list) => [data as PaymentMethod, ...(list ?? [])]);
     setCard(''); setIban('');
     toast(t('pm.added'), 'success');
-    q.reload();
   }
 
   async function remove(m: PaymentMethod) {

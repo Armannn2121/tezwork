@@ -8,7 +8,7 @@ import { useFeedback } from '../../lib/feedback';
 import { formatKzt, timeUntil, ts } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { cancelShiftReminder, syncShiftReminders } from '../../lib/reminders';
-import { putApplications } from '../../lib/shift-cache';
+import { patchShift, putApplications } from '../../lib/shift-cache';
 import { supabase } from '../../lib/supabase';
 import { MyApplication, STATUS_TONE, statusLabel } from '../../lib/types';
 import { useFocusQuery } from '../../lib/use-focus-query';
@@ -21,8 +21,11 @@ type Tab = 'upcoming' | 'history';
 function onLoaded(list: MyApplication[] | null) {
   const items = list ?? [];
   putApplications(items);
-  const soon = items.filter((a) => a.status === 'confirmed' && ts(a.starts_at) > Date.now());
+  const future = items.filter((a) => ts(a.starts_at) > Date.now());
+  const soon = future.filter((a) => a.status === 'confirmed');
   syncShiftReminders(soon.map((a) => ({ id: a.shift_id, title: a.title, starts_at: a.starts_at, city: a.city, address: a.address })));
+  // Жұмыс беруші ауысымды жапса — жазылым жабылады, еске салғыш та өшуі керек
+  future.filter((a) => a.status === 'cancelled').forEach((a) => cancelShiftReminder(a.shift_id));
 }
 
 export default function MyApplications() {
@@ -52,8 +55,9 @@ export default function MyApplications() {
     const { error } = await supabase.rpc('cancel_application', { p_application_id: a.application_id });
     if (error) return toast(humanError(error), 'error');
     cancelShiftReminder(a.shift_id);
+    q.setData((list) => (list ?? []).map((x) => (x.application_id === a.application_id ? { ...x, status: 'cancelled' } : x)));
+    patchShift(a.shift_id, { applied: false, application_status: 'cancelled', business_phone: null });
     toast(t('my.cancelled'), 'info');
-    q.reload();
   }
 
   const header = (

@@ -5,6 +5,14 @@ const cache = new Map<string, ShiftView>();
 
 export const getShift = (id: string) => cache.get(id);
 
+// Шыққанда немесе басқа аккаунтпен кіргенде: жазылым мен жұмыс беруші нөмірі келесі пайдаланушыға көрінбеуі керек
+export const clearShiftCache = () => cache.clear();
+
+// get_shift толық көріністі қайтарады — бұрынғысының үстіне жазамыз
+export function putShift(s: ShiftView) {
+  cache.set(s.id, { ...cache.get(s.id), ...s });
+}
+
 export function patchShift(id: string, patch: Partial<ShiftView>) {
   const cur = cache.get(id);
   if (cur) cache.set(id, { ...cur, ...patch });

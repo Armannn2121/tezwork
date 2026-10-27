@@ -15,6 +15,7 @@ export const ru: Record<keyof typeof kk, string> = {
   'common.search': 'Поиск',
   'common.close': 'Закрыть',
   'common.share': 'Поделиться',
+  'common.copied': 'Текст скопирован — можно отправить в любой чат',
 
   'time.today': 'Сегодня',
   'time.tomorrow': 'Завтра',

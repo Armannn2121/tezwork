@@ -13,11 +13,12 @@ import { DraftErrors, RegistrationDraft, validateDraft } from '../lib/registrati
 import { useSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
+import { Profile } from '../lib/types';
 import { Button, Field } from '../lib/ui';
 
 export default function ProfileEdit() {
   const router = useRouter();
-  const { profile, iin, refreshProfile, saveIin } = useSession();
+  const { profile, iin, applyProfile, saveIin } = useSession();
   const { toast } = useFeedback();
   const [form, setForm] = useState<RegistrationDraft>({
     role: profile?.role ?? 'worker',
@@ -48,14 +49,15 @@ export default function ProfileEdit() {
       contact_phone: contactPhone,
     };
     if (isBiz) patch.company_bin = form.company_bin || null;
-    const { error } = await supabase.from('profiles').update(patch).eq('id', profile.id);
+    // Жаңартылған жолды бірден қайтарамыз — профильді қайта сұрамаймыз
+    const { data, error } = await supabase.from('profiles').update(patch).eq('id', profile.id).select().single();
     if (error) { setBusy(false); return toast(humanError(error), 'error'); }
+    applyProfile(data as Profile);
     // ЖСН бір рет сақталады
     if (!iin && form.iin) {
       const { error: iinErr } = await saveIin(form.iin);
       if (iinErr) { setBusy(false); return toast(humanError(iinErr), 'error'); }
     }
-    await refreshProfile();
     setBusy(false);
     toast(t('profile.saved'), 'success');
     router.back();

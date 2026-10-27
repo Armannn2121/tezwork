@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { setHapticsEnabled } from './haptics';
 import { Lang, setLangValue } from './i18n';
@@ -63,9 +63,10 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  return (
-    <SettingsCtx.Provider value={{ ...settings, ready, scheme, revision: `${settings.lang}:${scheme}`, update }}>
-      {children}
-    </SettingsCtx.Provider>
+  const value = useMemo(
+    () => ({ ...settings, ready, scheme, revision: `${settings.lang}:${scheme}`, update }),
+    [settings, ready, scheme, update],
   );
+
+  return <SettingsCtx.Provider value={value}>{children}</SettingsCtx.Provider>;
 }

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,8 +52,11 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     setDialog(null);
   };
 
+  // Toast шыққанда барлық экран қайта салынбауы үшін мән тұрақты
+  const api = useMemo(() => ({ toast, confirm }), [toast, confirm]);
+
   return (
-    <Ctx.Provider value={{ toast, confirm }}>
+    <Ctx.Provider value={api}>
       {children}
       <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { paddingTop: insets.top + 8 }]}>
         {toasts.map((x) => (
