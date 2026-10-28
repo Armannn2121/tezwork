@@ -15,8 +15,10 @@ export function PhoneField({ digits, onChange, error, onSubmit, label, hint, aut
       value={maskLocalPhone(digits)}
       onChangeText={(v) => {
         let d = v.replace(/\D/g, '');
-        // «8 777...» немесе «7 777...» деп қойса — бас цифрды алып тастаймыз
-        if (d.length === 11 && (d.startsWith('8') || d.startsWith('7'))) d = d.slice(1);
+        // «8 777...» деп теріп бастаса: «+7» тұрғандықтан 8 артық (қазақстандық нөмір +7-ден кейін 7-ден басталады)
+        if (d.startsWith('8')) d = d.slice(1);
+        // «7 777...» деп толық қойса — бас цифрды алып тастаймыз
+        if (d.length === 11 && d.startsWith('7')) d = d.slice(1);
         onChange(d.slice(0, 10));
       }}
       keyboardType="phone-pad"
