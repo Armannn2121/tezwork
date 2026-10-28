@@ -291,6 +291,7 @@ export const ru: Record<keyof typeof kk, string> = {
 
   'profile.edit': 'Редактировать профиль',
   'profile.phone': 'Телефон',
+  'profile.loginPhone': 'Номер для входа',
   'profile.iin': 'ИИН',
   'profile.iinMissing': 'Не указан',
   'profile.newShift': 'Новая смена',

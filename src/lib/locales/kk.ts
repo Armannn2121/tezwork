@@ -309,6 +309,7 @@ export const kk = {
   // Профиль
   'profile.edit': 'Профильді өңдеу',
   'profile.phone': 'Телефон',
+  'profile.loginPhone': 'Кіру нөмірі',
   'profile.iin': 'ЖСН',
   'profile.iinMissing': 'Көрсетілмеген',
   'profile.newShift': 'Жаңа ауысым',

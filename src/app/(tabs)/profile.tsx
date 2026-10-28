@@ -22,6 +22,11 @@ export default function Profile() {
   const isBiz = profile?.role === 'business';
   const rating = useFocusQuery<{ avg: number | null; reviews: number }[]>('my-rating', () => supabase.rpc('my_rating'));
   const wallet = useFocusQuery<WalletSummary[]>('my-wallet', () => supabase.rpc('my_wallet'));
+  // Басқаларға көрінетін нөмір — байланыс нөмірі; кіру нөмірі одан өзгеше болса ғана бөлек көрсетіледі
+  const loginPhone = session?.user.phone;
+  const contactPhone = profile?.contact_phone || loginPhone;
+  const digits = (p?: string | null) => (p ?? '').replace(/\D/g, '');
+  const separateLogin = !!loginPhone && digits(contactPhone) !== digits(loginPhone);
 
   async function logout() {
     if (await confirm({ title: t('settings.logout'), message: t('settings.logoutMsg'), confirm: t('settings.logout'), cancel: t('common.cancel') })) {
@@ -54,7 +59,8 @@ export default function Profile() {
 
       <MenuGroup>
         <MenuRow icon="create-outline" label={t('profile.edit')} onPress={() => router.push('/profile-edit')} />
-        <MenuRow icon="call-outline" label={t('profile.phone')} value={formatPhone(session?.user.phone)} />
+        <MenuRow icon="call-outline" label={t('contact.phoneLabel')} value={formatPhone(contactPhone)} onPress={() => router.push('/profile-edit')} />
+        {separateLogin && <MenuRow icon="log-in-outline" label={t('profile.loginPhone')} value={formatPhone(loginPhone)} />}
         <MenuRow icon="card-outline" label={t('profile.iin')} value={iin ? maskIin(iin) : t('profile.iinMissing')} onPress={iin ? undefined : () => router.push('/profile-edit')} last={!isBiz} />
         {isBiz && <MenuRow icon="add-circle-outline" label={t('profile.newShift')} onPress={() => router.navigate('/create')} last />}
       </MenuGroup>
