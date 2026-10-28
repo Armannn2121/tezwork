@@ -8,7 +8,8 @@
     "scheme": "tezwork",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {}
     },
     "android": {
       "adaptiveIcon": {
@@ -45,6 +46,17 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#F5F7FB"
+    "backgroundColor": "#F5F7FB",
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "828e71d9-b181-4ae0-a9cb-a0fc320f2d6a"
+      }
+    },
+    "owner": "arman2000"
   }
 }
