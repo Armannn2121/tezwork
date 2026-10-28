@@ -10,7 +10,6 @@ import { useFeedback } from '../../lib/feedback';
 import { dayOffset, firstName, formatKzt, hourlyRate, shiftWhen, ts } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
-import { scheduleShiftReminder } from '../../lib/reminders';
 import { patchShift, putBizShifts, putOpenShifts } from '../../lib/shift-cache';
 import { loadShift } from '../../lib/shift-loader';
 import { supabase } from '../../lib/supabase';
@@ -82,10 +81,9 @@ function WorkerFeed() {
       if (isIinMissing(error)) { await iinGate(true); return; }
       return toast(humanError(error), 'error');
     }
-    // Тізімді күтпей-ақ жаңартамыз
-    q.setData((d) => (d ?? []).map((x) => (x.id === s.id ? { ...x, applied: true, spots_left: x.spots_left - 1 } : x)));
-    patchShift(s.id, { applied: true, application_status: 'confirmed', spots_left: s.spots_left - 1 });
-    scheduleShiftReminder(s);
+    // Тізімді күтпей-ақ жаңартамыз. Орын жұмыс беруші қабылдағанда ғана алынады, еске салғыш та сонда қойылады
+    q.setData((d) => (d ?? []).map((x) => (x.id === s.id ? { ...x, applied: true } : x)));
+    patchShift(s.id, { applied: true, application_status: 'pending' });
     toast(t('feed.appliedToast'), 'success');
     // Толық бетте «Бас тарту» мен байланыс нөмірі шығуы үшін жазылым деректерін фонда кэшке саламыз
     loadShift(s.id, 'worker').catch(() => {});
@@ -241,6 +239,7 @@ function BusinessShifts() {
             {s.status !== 'open' && <Badge label={t('biz.closed')} icon="lock-closed" tone="neutral" />}
             {s.status === 'open' && ended(s) && <Badge label={t('biz.ended')} tone="neutral" />}
             {s.status === 'open' && s.taken >= s.spots && !ended(s) && <Badge label={t('biz.full')} icon="checkmark-done" tone="brand" />}
+            {s.status === 'open' && !ended(s) && !!s.pending && s.taken < s.spots && <Badge label={t('biz.pending', { n: s.pending })} icon="person-add" tone="warn" />}
           </>}
         />
       )}

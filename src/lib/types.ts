@@ -24,7 +24,7 @@ export type OpenShift = {
   company_rating?: number | null; company_reviews?: number; description?: string | null;
 };
 
-export type ApplicationStatus = 'confirmed' | 'checked_in' | 'completed' | 'cancelled';
+export type ApplicationStatus = 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'rejected';
 
 export type MyApplication = {
   application_id: string; status: ApplicationStatus; shift_id: string; title: string; city: string;
@@ -35,7 +35,7 @@ export type MyApplication = {
 
 export type BizShift = {
   id: string; title: string; city: string; address: string | null; starts_at: string; ends_at: string;
-  pay_kzt: number; spots: number; status: string; taken: number; category?: string; description?: string | null;
+  pay_kzt: number; spots: number; status: string; taken: number; pending?: number; category?: string; description?: string | null;
 };
 
 export type Applicant = {
@@ -86,8 +86,11 @@ export const categoryOf = (id?: string) => {
   return all.find((c) => c.id === id) ?? all[all.length - 1];
 };
 
-export const STATUS_TONE: Record<ApplicationStatus, 'brand' | 'info' | 'neutral' | 'danger'> = {
-  confirmed: 'brand', checked_in: 'info', completed: 'neutral', cancelled: 'danger',
+export const STATUS_TONE: Record<ApplicationStatus, 'brand' | 'info' | 'neutral' | 'danger' | 'warn'> = {
+  pending: 'warn', confirmed: 'brand', checked_in: 'info', completed: 'neutral', cancelled: 'danger', rejected: 'danger',
 };
+
+// Жұмыс беруші қабылдаған: орын алынды, байланыс ашылды
+export const isAccepted = (s?: ApplicationStatus) => s === 'confirmed' || s === 'checked_in' || s === 'completed';
 
 export const statusLabel = (s: ApplicationStatus) => t(`status.${s}` as TKey);

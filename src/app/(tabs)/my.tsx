@@ -24,8 +24,8 @@ function onLoaded(list: MyApplication[] | null) {
   const future = items.filter((a) => ts(a.starts_at) > Date.now());
   const soon = future.filter((a) => a.status === 'confirmed');
   syncShiftReminders(soon.map((a) => ({ id: a.shift_id, title: a.title, starts_at: a.starts_at, city: a.city, address: a.address })));
-  // Жұмыс беруші ауысымды жапса — жазылым жабылады, еске салғыш та өшуі керек
-  future.filter((a) => a.status === 'cancelled').forEach((a) => cancelShiftReminder(a.shift_id));
+  // Жұмыс беруші ауысымды жапса немесе бас тартса — еске салғыш өшуі керек
+  future.filter((a) => a.status === 'cancelled' || a.status === 'rejected').forEach((a) => cancelShiftReminder(a.shift_id));
 }
 
 export default function MyApplications() {
@@ -37,12 +37,12 @@ export default function MyApplications() {
 
   const now = useNow();
   const all = q.data ?? [];
-  const isUpcoming = (a: MyApplication) => a.status !== 'cancelled' && a.status !== 'completed' && ts(a.ends_at) > now;
+  const isUpcoming = (a: MyApplication) => (a.status === 'pending' || a.status === 'confirmed' || a.status === 'checked_in') && ts(a.ends_at) > now;
   const upcoming = all.filter(isUpcoming).sort((a, b) => ts(a.starts_at) - ts(b.starts_at));
   const history = all.filter((a) => !isUpcoming(a)).sort((a, b) => ts(b.starts_at) - ts(a.starts_at));
   const completed = all.filter((a) => a.status === 'completed');
   const earned = completed.reduce((n, a) => n + a.pay_kzt, 0);
-  const expected = upcoming.reduce((n, a) => n + a.pay_kzt, 0);
+  const expected = upcoming.filter((a) => a.status !== 'pending').reduce((n, a) => n + a.pay_kzt, 0);
   const next = upcoming[0];
 
   async function cancel(a: MyApplication) {
@@ -83,7 +83,7 @@ export default function MyApplications() {
   );
 
   function footer(a: MyApplication) {
-    if (a.status === 'confirmed' && ts(a.starts_at) > now) {
+    if ((a.status === 'pending' || a.status === 'confirmed') && ts(a.starts_at) > now) {
       return <Button title={t('my.cancel')} variant="ghost" size="sm" onPress={() => cancel(a)} />;
     }
     if (a.status === 'completed') {

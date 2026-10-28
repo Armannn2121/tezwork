@@ -15,10 +15,10 @@ import { loadShift } from '../../lib/shift-loader';
 import { shareText } from '../../lib/share';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, themed } from '../../lib/theme';
-import { Applicant, ApplicationStatus, categoryOf, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
+import { Applicant, ApplicationStatus, categoryOf, isAccepted, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
 import { Badge, Button, Card, EmptyState, ErrorBanner, IconText, Progress, SectionTitle, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
-import { cancelShiftReminder, scheduleShiftReminder } from '../../lib/reminders';
+import { cancelShiftReminder } from '../../lib/reminders';
 import { useIinGate } from '../../lib/use-iin-gate';
 import { useNow } from '../../lib/use-now';
 
@@ -153,12 +153,11 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
       if (isIinMissing(error)) { await iinGate(true); return; }
       return toast(humanError(error), 'error');
     }
-    onChange({ applied: true, application_status: 'confirmed', spots_left: (shift.spots_left ?? 1) - 1 });
-    scheduleShiftReminder(shift);
+    onChange({ applied: true, application_status: 'pending' });
     toast(t('shift.applied'), 'success');
-    // Жазылым id-сі (бас тарту үшін) мен жұмыс берушінің нөмірін фонда жүктейміз — пайдаланушы күтпейді
+    // Өтінім id-сін (бас тарту үшін) фонда жүктейміз — пайдаланушы күтпейді
     loadShift(shift.id, 'worker')
-      .then((fresh) => { if (fresh) onChange({ application_id: fresh.application_id, business_phone: fresh.business_phone, spots_left: fresh.spots_left }); })
+      .then((fresh) => { if (fresh) onChange({ application_id: fresh.application_id, application_status: fresh.application_status, spots_left: fresh.spots_left }); })
       .catch(() => {});
   }
 
@@ -189,12 +188,14 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
           <Badge label={statusLabel(status)} tone={STATUS_TONE[status]} />
         </Card>
       )}
-      {status === 'confirmed' && future && shift.application_id
+      {status === 'pending' && <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.pendingHint')}</Text>}
+      {status === 'rejected' && <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.rejectedHint')}</Text>}
+      {(status === 'pending' || status === 'confirmed') && future && shift.application_id
         ? <Button title={t('shift.cancelApply')} variant="danger" onPress={cancel} loading={busy} />
-        : !shift.applied && future && (shift.spots_left ?? 0) > 0
+        : !shift.applied && status !== 'rejected' && future && (shift.spots_left ?? 0) > 0
           ? <Button title={t('feed.apply')} icon="flash" onPress={apply} loading={busy} />
           : null}
-      {status && status !== 'cancelled' && !!shift.business_phone && (
+      {isAccepted(status) && !!shift.business_phone && (
         <ContactCard title={t('contact.employer')} phone={shift.business_phone} />
       )}
       {status === 'completed' && shift.application_id && (
@@ -232,11 +233,43 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
   const [rateFor, setRateFor] = useState<Applicant | null>(null);
 
   async function setStatus(a: Applicant, to: ApplicationStatus) {
+    // Аяқтау = төлем: қайтарылмайтын әрекет, сондықтан сұраймыз
+    if (to === 'completed') {
+      const ok = await confirm({
+        title: t('shift.payTitle'),
+        message: t('shift.payMsg', { pay: formatKzt(shift.pay_kzt), name: a.full_name }),
+        confirm: t('shift.payConfirm'), cancel: t('common.cancel'),
+      });
+      if (!ok) return;
+    }
     setBusyId(a.application_id);
     const { error } = await supabase.rpc('set_application_status', { p_application_id: a.application_id, p_status: to });
     setBusyId(null);
     if (error) return toast(humanError(error), 'error');
     q.setData((list) => (list ?? []).map((x) => (x.application_id === a.application_id ? { ...x, status: to } : x)));
+    if (to === 'completed') toast(t('shift.paid', { name: a.full_name }), 'success');
+  }
+
+  async function decide(a: Applicant, accept: boolean) {
+    if (!accept) {
+      const ok = await confirm({
+        title: t('shift.rejectTitle'), message: t('shift.rejectMsg', { name: a.full_name }),
+        confirm: t('shift.reject'), cancel: t('common.cancel'), destructive: true,
+      });
+      if (!ok) return;
+    }
+    setBusyId(a.application_id);
+    const { error } = await supabase.rpc('decide_application', { p_application_id: a.application_id, p_accept: accept });
+    setBusyId(null);
+    if (error) return toast(humanError(error), 'error');
+    if (accept) {
+      const taken = (shift.taken ?? 0) + 1;
+      onChange({ taken, spots_left: Math.max(0, (shift.spots ?? taken) - taken) });
+      toast(t('shift.accepted', { name: a.full_name }), 'success');
+      q.reload(); // орын толса, қалған өтінімдерге сервер өзі бас тартады
+    } else {
+      q.setData((list) => (list ?? []).filter((x) => x.application_id !== a.application_id));
+    }
   }
 
   async function closeShift() {
@@ -249,7 +282,8 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
     q.reload(); // расталған жазылымдар да жабылды
   }
 
-  const active = (applicants ?? []).filter((a) => a.status !== 'cancelled');
+  const active = (applicants ?? []).filter((a) => isAccepted(a.status));
+  const hasPending = (applicants ?? []).some((a) => a.status === 'pending');
   const started = ts(shift.starts_at) <= now;
 
   return (
@@ -280,6 +314,12 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
                   </View>
                 </View>
                 {!!a.worker_phone && <ContactIcons phone={a.worker_phone} />}
+                {a.status === 'pending' && shift.status === 'open' && ts(shift.ends_at) > now && (
+                  <View style={{ flexBasis: '100%', flexDirection: 'row', gap: 8 }}>
+                    <Button title={t('shift.accept')} size="sm" icon="checkmark" loading={busyId === a.application_id} onPress={() => decide(a, true)} style={{ flex: 1, marginTop: 0 }} />
+                    <Button title={t('shift.reject')} size="sm" variant="secondary" disabled={busyId === a.application_id} onPress={() => decide(a, false)} style={{ flex: 1, marginTop: 0 }} />
+                  </View>
+                )}
                 {/* Жабық ауысымға «Келді» белгіленбейді; бірақ келіп қойғанның жұмысын аяқтап, төлеуге болады */}
                 {next && started && (shift.status === 'open' || a.status === 'checked_in') && (
                   <Button title={next.label()} size="sm" variant="secondary" loading={busyId === a.application_id} onPress={() => setStatus(a, next.to)} style={{ paddingHorizontal: 14, marginTop: 0 }} />
@@ -291,6 +331,9 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
             );
           })}
         </View>
+      )}
+      {hasPending && shift.status === 'open' && (
+        <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.pendingHelp')}</Text>
       )}
       {!started && active.length > 0 && (
         <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.markLater')}</Text>
@@ -316,5 +359,5 @@ const s = themed((colors) => ({
   catIcon: { width: 52, height: 52, borderRadius: 14, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   kpi: { flex: 1, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: 14 },
   list: { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, marginBottom: 12, overflow: 'hidden' },
-  applicant: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
+  applicant: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
 }));
