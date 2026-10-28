@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
 import { ContactCard, ContactIcons } from '../../components/contact';
 import { RateModal, RatingBadge } from '../../components/rating';
@@ -15,12 +15,15 @@ import { loadShift } from '../../lib/shift-loader';
 import { shareText } from '../../lib/share';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, themed } from '../../lib/theme';
-import { Applicant, ApplicationStatus, categoryOf, isAccepted, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
+import { Applicant, categoryOf, isAccepted, ShiftView, STATUS_TONE, statusLabel } from '../../lib/types';
 import { Badge, Button, Card, EmptyState, ErrorBanner, IconText, Progress, SectionTitle, text } from '../../lib/ui';
 import { useFocusQuery } from '../../lib/use-focus-query';
 import { cancelShiftReminder } from '../../lib/reminders';
 import { useIinGate } from '../../lib/use-iin-gate';
 import { useNow } from '../../lib/use-now';
+
+// Екінші тараптың әрекетін (қабылдау, «Жұмыс аяқталды», төлем) күтіп тұрғанда бет осы жиілікпен жаңарады
+const POLL_MS = 8000;
 
 export default function ShiftDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,6 +44,15 @@ export default function ShiftDetails() {
       .finally(() => { if (alive) setLoaded(true); });
     return () => { alive = false; };
   }, [id, profile?.role]);
+
+  const waiting = profile?.role !== 'business' && (shift?.application_status === 'pending' || shift?.application_status === 'done');
+  useFocusEffect(useCallback(() => {
+    if (!waiting) return;
+    const timer = setInterval(() => {
+      loadShift(id, 'worker').then((fresh) => { if (fresh) setShift((prev) => ({ ...prev, ...fresh })); }).catch(() => {});
+    }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [waiting, id]));
 
   if (!shift && !loaded) {
     return (
@@ -84,7 +96,8 @@ export default function ShiftDetails() {
         {shift.company_reviews !== undefined && <View style={{ marginTop: 4 }}><RatingBadge avg={shift.company_rating} count={shift.company_reviews} /></View>}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
           <Badge label={cat.label} tone="neutral" />
-          {!!shift.status && shift.status !== 'open' && <Badge label={t('biz.closed')} icon="lock-closed" tone="danger" />}
+          {shift.status === 'closed' && <Badge label={t('biz.ended')} icon="checkmark-done" tone="brand" />}
+          {shift.status === 'cancelled' && <Badge label={t('biz.closed')} icon="lock-closed" tone="danger" />}
           {isNightShift(shift.starts_at, shift.ends_at) && <Badge label={t('shift.night')} icon="moon" tone="info" />}
           {ts(shift.starts_at) > now && <Badge label={timeUntil(shift.starts_at, new Date(now))} icon="time" tone="brand" />}
         </View>
@@ -174,6 +187,19 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
     toast(t('my.cancelled'), 'info');
   }
 
+  async function finish() {
+    if (!shift.application_id) return;
+    const ok = await confirm({ title: t('shift.finishTitle'), message: t('shift.finishMsg', { pay: formatKzt(shift.pay_kzt) }), confirm: t('shift.finish'), cancel: t('common.cancel') });
+    if (!ok) return;
+    setBusy(true);
+    const { error } = await supabase.rpc('finish_application', { p_application_id: shift.application_id });
+    setBusy(false);
+    if (error) return toast(humanError(error), 'error');
+    onChange({ application_status: 'done' });
+    cancelShiftReminder(shift.id);
+    toast(t('shift.finishSent'), 'success');
+  }
+
   return (
     <View>
       {shift.spots ? (
@@ -190,8 +216,16 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
       )}
       {status === 'pending' && <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.pendingHint')}</Text>}
       {status === 'rejected' && <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.rejectedHint')}</Text>}
+      {(status === 'confirmed' || status === 'checked_in') && (
+        <>
+          <Text style={[text.muted, { marginBottom: 4 }]}>{t('shift.acceptedHint')}</Text>
+          <Button title={t('shift.finish')} icon="checkmark-done" onPress={finish} loading={busy} style={{ marginBottom: 10 }} />
+        </>
+      )}
+      {status === 'done' && <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.doneHint', { pay: formatKzt(shift.pay_kzt) })}</Text>}
+      {status === 'completed' && <Text style={[text.body, { color: colors.brand, marginBottom: 12 }]}>{t('shift.paidHint', { pay: formatKzt(shift.pay_kzt) })}</Text>}
       {(status === 'pending' || status === 'confirmed') && future && shift.application_id
-        ? <Button title={t('shift.cancelApply')} variant="danger" onPress={cancel} loading={busy} />
+        ? <Button title={t('shift.cancelApply')} variant={status === 'confirmed' ? 'secondary' : 'danger'} onPress={cancel} disabled={busy} />
         : !shift.applied && status !== 'rejected' && future && (shift.spots_left ?? 0) > 0
           ? <Button title={t('feed.apply')} icon="flash" onPress={apply} loading={busy} />
           : null}
@@ -218,11 +252,6 @@ function WorkerPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Part
 }
 
 // ---------------- Бизнес әрекеттері ----------------
-const NEXT: Partial<Record<ApplicationStatus, { to: ApplicationStatus; label: () => string }>> = {
-  confirmed: { to: 'checked_in', label: () => t('shift.markIn') },
-  checked_in: { to: 'completed', label: () => t('shift.markDone') },
-};
-
 function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Partial<ShiftView>) => void }) {
   const router = useRouter();
   const { toast, confirm } = useFeedback();
@@ -232,22 +261,32 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rateFor, setRateFor] = useState<Applicant | null>(null);
 
-  async function setStatus(a: Applicant, to: ApplicationStatus) {
-    // Аяқтау = төлем: қайтарылмайтын әрекет, сондықтан сұраймыз
-    if (to === 'completed') {
-      const ok = await confirm({
-        title: t('shift.payTitle'),
-        message: t('shift.payMsg', { pay: formatKzt(shift.pay_kzt), name: a.full_name }),
-        confirm: t('shift.payConfirm'), cancel: t('common.cancel'),
-      });
-      if (!ok) return;
-    }
+  // Жұмысшылар өтінім берсе немесе «Жұмыс аяқталды» басса, тізім өзі жаңарады
+  const reloadApplicants = q.reload;
+  const live = shift.status === 'open' || (applicants ?? []).some((a) => a.status === 'done');
+  useFocusEffect(useCallback(() => {
+    if (!live) return;
+    const timer = setInterval(reloadApplicants, POLL_MS);
+    return () => clearInterval(timer);
+  }, [live, reloadApplicants]));
+
+  // Жұмысты растау = төлем: қайтарылмайтын әрекет, сондықтан сұраймыз
+  async function complete(a: Applicant) {
+    const ok = await confirm({
+      title: t('shift.payTitle'),
+      message: t('shift.payMsg', { pay: formatKzt(shift.pay_kzt), name: a.full_name }),
+      confirm: t('shift.payConfirm'), cancel: t('common.cancel'),
+    });
+    if (!ok) return;
     setBusyId(a.application_id);
-    const { error } = await supabase.rpc('set_application_status', { p_application_id: a.application_id, p_status: to });
+    const { error } = await supabase.rpc('set_application_status', { p_application_id: a.application_id, p_status: 'completed' });
     setBusyId(null);
     if (error) return toast(humanError(error), 'error');
-    q.setData((list) => (list ?? []).map((x) => (x.application_id === a.application_id ? { ...x, status: to } : x)));
-    if (to === 'completed') toast(t('shift.paid', { name: a.full_name }), 'success');
+    q.setData((list) => (list ?? []).map((x) => (x.application_id === a.application_id ? { ...x, status: 'completed' } : x)));
+    // Бәрі төленсе, сервер вакансияны өзі жабады
+    const fresh = await loadShift(shift.id, 'business').catch(() => undefined);
+    if (fresh) onChange({ status: fresh.status, taken: fresh.taken });
+    toast(fresh?.status === 'closed' ? t('shift.closedDone') : t('shift.paid', { name: a.full_name }), 'success');
   }
 
   async function decide(a: Applicant, accept: boolean) {
@@ -300,7 +339,8 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
       ) : (
         <View style={s.list}>
           {applicants.map((a) => {
-            const next = NEXT[a.status];
+            // Жұмысшы баспаса да, ауысым басталған соң жұмыс беруші өзі аяқтай алады
+            const canFinish = a.status === 'done' || ((a.status === 'confirmed' || a.status === 'checked_in') && started);
             return (
               <View key={a.application_id} style={s.applicant}>
                 <View style={{ flex: 1 }}>
@@ -320,9 +360,16 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
                     <Button title={t('shift.reject')} size="sm" variant="secondary" disabled={busyId === a.application_id} onPress={() => decide(a, false)} style={{ flex: 1, marginTop: 0 }} />
                   </View>
                 )}
-                {/* Жабық ауысымға «Келді» белгіленбейді; бірақ келіп қойғанның жұмысын аяқтап, төлеуге болады */}
-                {next && started && (shift.status === 'open' || a.status === 'checked_in') && (
-                  <Button title={next.label()} size="sm" variant="secondary" loading={busyId === a.application_id} onPress={() => setStatus(a, next.to)} style={{ paddingHorizontal: 14, marginTop: 0 }} />
+                {canFinish && (
+                  <Button
+                    title={a.status === 'done' ? t('shift.payConfirm') : t('shift.markDone')}
+                    icon="wallet-outline"
+                    size="sm"
+                    variant={a.status === 'done' ? 'primary' : 'secondary'}
+                    loading={busyId === a.application_id}
+                    onPress={() => complete(a)}
+                    style={{ flexBasis: '100%', marginTop: 0 }}
+                  />
                 )}
                 {a.status === 'completed' && !a.my_stars && (
                   <Button title={t('rating.rate')} icon="star-outline" size="sm" variant="secondary" onPress={() => setRateFor(a)} style={{ paddingHorizontal: 12, marginTop: 0 }} />
@@ -335,7 +382,7 @@ function BusinessPanel({ shift, onChange }: { shift: ShiftView; onChange: (p: Pa
       {hasPending && shift.status === 'open' && (
         <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.pendingHelp')}</Text>
       )}
-      {!started && active.length > 0 && (
+      {active.some((a) => a.status !== 'completed') && (
         <Text style={[text.muted, { marginBottom: 12 }]}>{t('shift.markLater')}</Text>
       )}
 

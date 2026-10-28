@@ -236,7 +236,9 @@ function BusinessShifts() {
           showProgress
           onPress={() => router.push({ pathname: '/shift/[id]', params: { id: s.id } })}
           badges={<>
-            {s.status !== 'open' && <Badge label={t('biz.closed')} icon="lock-closed" tone="neutral" />}
+            {s.status === 'closed' && <Badge label={t('biz.ended')} icon="checkmark-done" tone="brand" />}
+            {s.status === 'cancelled' && <Badge label={t('biz.closed')} icon="lock-closed" tone="neutral" />}
+            {!!s.awaiting && <Badge label={t('biz.awaiting', { n: s.awaiting })} icon="wallet-outline" tone="info" />}
             {s.status === 'open' && ended(s) && <Badge label={t('biz.ended')} tone="neutral" />}
             {s.status === 'open' && s.taken >= s.spots && !ended(s) && <Badge label={t('biz.full')} icon="checkmark-done" tone="brand" />}
             {s.status === 'open' && !ended(s) && !!s.pending && s.taken < s.spots && <Badge label={t('biz.pending', { n: s.pending })} icon="person-add" tone="warn" />}

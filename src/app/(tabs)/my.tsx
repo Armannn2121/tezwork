@@ -25,7 +25,7 @@ function onLoaded(list: MyApplication[] | null) {
   const soon = future.filter((a) => a.status === 'confirmed');
   syncShiftReminders(soon.map((a) => ({ id: a.shift_id, title: a.title, starts_at: a.starts_at, city: a.city, address: a.address })));
   // Жұмыс беруші ауысымды жапса немесе бас тартса — еске салғыш өшуі керек
-  future.filter((a) => a.status === 'cancelled' || a.status === 'rejected').forEach((a) => cancelShiftReminder(a.shift_id));
+  future.filter((a) => a.status === 'cancelled' || a.status === 'rejected' || a.status === 'done').forEach((a) => cancelShiftReminder(a.shift_id));
 }
 
 export default function MyApplications() {
@@ -37,7 +37,9 @@ export default function MyApplications() {
 
   const now = useNow();
   const all = q.data ?? [];
-  const isUpcoming = (a: MyApplication) => (a.status === 'pending' || a.status === 'confirmed' || a.status === 'checked_in') && ts(a.ends_at) > now;
+  // «Жұмыс аяқталды» басылып, төлем күтіп тұрғаны да белсенді болып саналады
+  const isUpcoming = (a: MyApplication) => a.status === 'done'
+    || ((a.status === 'pending' || a.status === 'confirmed' || a.status === 'checked_in') && ts(a.ends_at) > now);
   const upcoming = all.filter(isUpcoming).sort((a, b) => ts(a.starts_at) - ts(b.starts_at));
   const history = all.filter((a) => !isUpcoming(a)).sort((a, b) => ts(b.starts_at) - ts(a.starts_at));
   const completed = all.filter((a) => a.status === 'completed');
@@ -58,6 +60,21 @@ export default function MyApplications() {
     q.setData((list) => (list ?? []).map((x) => (x.application_id === a.application_id ? { ...x, status: 'cancelled' } : x)));
     patchShift(a.shift_id, { applied: false, application_status: 'cancelled', business_phone: null });
     toast(t('my.cancelled'), 'info');
+  }
+
+  async function finish(a: MyApplication) {
+    const ok = await confirm({
+      title: t('shift.finishTitle'),
+      message: t('shift.finishMsg', { pay: formatKzt(a.pay_kzt) }),
+      confirm: t('shift.finish'), cancel: t('common.cancel'),
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc('finish_application', { p_application_id: a.application_id });
+    if (error) return toast(humanError(error), 'error');
+    cancelShiftReminder(a.shift_id);
+    q.setData((list) => (list ?? []).map((x) => (x.application_id === a.application_id ? { ...x, status: 'done' } : x)));
+    patchShift(a.shift_id, { application_status: 'done' });
+    toast(t('shift.finishSent'), 'success');
   }
 
   const header = (
@@ -83,8 +100,15 @@ export default function MyApplications() {
   );
 
   function footer(a: MyApplication) {
-    if ((a.status === 'pending' || a.status === 'confirmed') && ts(a.starts_at) > now) {
-      return <Button title={t('my.cancel')} variant="ghost" size="sm" onPress={() => cancel(a)} />;
+    const canFinish = a.status === 'confirmed' || a.status === 'checked_in';
+    const canCancel = (a.status === 'pending' || a.status === 'confirmed') && ts(a.starts_at) > now;
+    if (canFinish || canCancel) {
+      return (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {canFinish && <Button title={t('shift.finish')} icon="checkmark-done" size="sm" onPress={() => finish(a)} style={{ flex: 1, marginTop: 0 }} />}
+          {canCancel && <Button title={t('my.cancel')} variant="ghost" size="sm" onPress={() => cancel(a)} style={{ marginTop: 0 }} />}
+        </View>
+      );
     }
     if (a.status === 'completed') {
       return a.my_stars

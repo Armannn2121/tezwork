@@ -1,6 +1,8 @@
 // Өтінімді растау ағынын екі демо аккаунтпен тексереді:
-// жұмыс беруші ауысым ашады → жұмысшы өтінім береді (pending) → жұмыс беруші қабылдайды → орын толып, ауысым лентадан жоғалады.
-// Іске қосу: node scripts/e2e/approval.mjs        (соңында тест ауысымы жабылады)
+// жұмыс беруші ауысым ашады → жұмысшы өтінім береді (pending) → жұмыс беруші қабылдайды → орын толып, ауысым лентадан жоғалады
+// → жұмысшы «Жұмыс аяқталды» басады (done) → жұмыс беруші растайды → төлем түседі, вакансия жабылады.
+// Іске қосу: node scripts/e2e/approval.mjs        (төлемге дейін; соңында тест ауысымы жабылады)
+//            E2E_PAY=1 node scripts/e2e/approval.mjs   (демо әмияндар арасында нақты тест-төлеммен)
 //            E2E_KEEP=1 node scripts/e2e/approval.mjs  (ауысым ашық қалады, өтінім pending күйінде — UI-да қолмен тексеру үшін)
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
@@ -15,6 +17,7 @@ const env = Object.fromEntries(
 const config = readFileSync(join(root, 'src/lib/config.ts'), 'utf8');
 const otpFor = (phone) => config.match(new RegExp(`'\\${phone}':\\s*'(\\d+)'`))?.[1];
 const keep = process.env.E2E_KEEP === '1';
+const pay = process.env.E2E_PAY === '1';
 
 async function login(phone) {
   const c = createClient(env.EXPO_PUBLIC_SUPABASE_URL, env.EXPO_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
@@ -80,7 +83,24 @@ try {
     check('қабылданған жұмысшы өз ауысымын лентада көреді', feed2.some((s) => s.id === shift.id && s.applied));
 
     const { error: earlyErr } = await biz.c.rpc('set_application_status', { p_application_id: ap.application_id, p_status: 'completed' });
-    check('басталмаған ауысымды аяқтауға болмайды', !!earlyErr);
+    check('жұмысшы баспай тұрып, басталмаған ауысымды төлеуге болмайды', !!earlyErr);
+
+    const { error: otherErr } = await biz.c.rpc('finish_application', { p_application_id: ap.application_id });
+    check('«Жұмыс аяқталды» тек жұмысшыда', !!otherErr);
+    await rpc(worker.c, 'finish_application', { p_application_id: ap.application_id });
+    const [w3] = await rpc(worker.c, 'get_shift', { p_id: shift.id });
+    check('жұмысшы басқаннан кейін done', w3.application_status === 'done', w3.application_status);
+    const mine2 = (await rpc(biz.c, 'my_business_shifts')).find((s) => s.id === shift.id);
+    check('жұмыс берушіде «Растауды күтеді: 1»', mine2?.awaiting === 1, `awaiting=${mine2?.awaiting}`);
+
+    if (pay) {
+      const before = (await rpc(worker.c, 'my_wallet'))?.[0]?.balance ?? 0;
+      await rpc(biz.c, 'set_application_status', { p_application_id: ap.application_id, p_status: 'completed' });
+      const after = (await rpc(worker.c, 'my_wallet'))?.[0]?.balance ?? 0;
+      check('төлем жұмысшының әмиянына түсті', after - before === 6000, `${before} → ${after}`);
+      const done = (await rpc(biz.c, 'my_business_shifts')).find((s) => s.id === shift.id);
+      check('бәрі төленген соң вакансия жабылды', done?.status === 'closed', done?.status);
+    }
   }
 } finally {
   if (!keep) {
