@@ -38,7 +38,7 @@ const rpc = async (c, fn, args) => {
   return data;
 };
 
-const biz = await login('+77779876543');
+const biz = await login('+77784742126');
 const worker = await login('+77771234567');
 
 const start = new Date(Date.now() + 26 * 3600e3);

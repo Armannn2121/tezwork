@@ -16,7 +16,7 @@ const env = Object.fromEntries(
     .filter((l) => /^\s*[A-Z_]+=/.test(l))
     .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }),
 );
-const phone = process.env.EVAL_PHONE ?? '+77779876543';
+const phone = process.env.EVAL_PHONE ?? '+77784742126';
 const otp = process.env.EVAL_OTP
   ?? readFileSync(join(root, 'src/lib/config.ts'), 'utf8').match(new RegExp(`'\\${phone}':\\s*'(\\d+)'`))?.[1];
 if (!otp) throw new Error(`${phone} үшін тест коды табылмады`);

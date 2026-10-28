@@ -13,6 +13,6 @@ export const LEGAL_UPDATED = '25.10.2026';
 export const DEMO_MODE = true;
 export const DEMO_OTPS: Record<string, string> = {
   '+77771234567': '123456',
-  '+77779876543': '123456',
+  '+77784742126': '123456',
 };
 export const demoOtpFor = (phone?: string | null) => (DEMO_MODE && phone ? DEMO_OTPS[phone] ?? null : null);

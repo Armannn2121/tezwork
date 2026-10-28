@@ -4,7 +4,7 @@
 AI-SANA HACKATHON 2026 · «210» командасы (METU студенттері).
 
 - **Демо (веб):** `npx expo start --web` → http://localhost:8081 (төмендегі «Іске қосу» бөлімін қараңыз)
-- **Демо аккаунттар:** жұмысшы `+7 777 123 45 67`, жұмыс беруші `+7 777 987 65 43` — код экранда автоматты шығады (демо режим)
+- **Демо аккаунттар:** жұмысшы `+7 777 123 45 67`, жұмыс беруші `+7 778 474 21 26` — код экранда автоматты шығады (демо режим)
 
 ## 1. Мақсаты мен міндеттері
 
@@ -119,7 +119,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 1. `supabase/migrations/` ішіндегі SQL-дерді ретімен орындаңыз (SQL Editor немесе `supabase db push`).
 2. Edge Functions: `supabase functions deploy ai-shift-draft` (және SMS үшін `send-sms-hook`).
 3. Secrets: `GEMINI_API_KEY` — aistudio.google.com кілті (тегін). Не `ANTHROPIC_API_KEY` — console.anthropic.com кілті. Екеуі де болса, Gemini қолданылады; `AI_PROVIDER=claude` ауыстырады. Модельді `GEMINI_MODEL` / `AI_MODEL` арқылы өзгертуге болады.
-4. Authentication → Phone → Test Phone Numbers: `77771234567=123456`, `77779876543=123456` (демо аккаунттар).
+4. Authentication → Phone → Test Phone Numbers: `77771234567=123456`, `77784742126=123456` (демо аккаунттар).
 
 **Тексеру:**
 
